@@ -1,0 +1,6 @@
+managepackvhsost.settings_form:
+  title: managepackvhsost
+  description: Configure managepackvhsost.
+  parent: system.admin_config_system
+  route_name: managepackvhsost.settings_form
+  weight: 10

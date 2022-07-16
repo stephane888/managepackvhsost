@@ -1,0 +1,4 @@
+administer managepackvhsost configuration:
+  title: 'Administer managepackvhsost configuration'
+  description: 'Optional description.'
+  restrict access: true
