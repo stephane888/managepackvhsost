@@ -1,0 +1,24 @@
+<div class="packvhsost-blocks">
+	<div class="row no-gutters">
+		<div class="col-md-6 content-image">
+		{% if image %}
+			<div class="thumbnail-container">
+				<div class="thumbnail"> 
+					<iframe src="{{ image }}" frameborder="0" class=""></iframe>
+				</div>	
+			</div>	
+		{% endif %}
+		</div>
+		<div class="col-md-6">
+			<div class="content-text">
+    			<h3 class="name-site"> {{ name_site|raw }} </h3>
+    			<div class="date"> <i class="far fa-calendar-alt"></i> {{ date|raw }} </div>
+    			<div class="domaines"> {{ domaines }} </div>
+    			<div class="souscription"> {{ souscription }} </div>
+    			<div class="change_domain"> {{ change_domain }} </div>
+    			<div class="dissociate_domain"> {{ dissociate_domain }} </div>
+			</div>
+		</div>
+	</div>
+</div>
+

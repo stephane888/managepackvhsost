@@ -4,3 +4,7 @@ services:
     arguments: ['@messenger']
     tags:
       - { name: event_subscriber }
+  
+  managepackvhsost.blocksdomains:
+    class: Drupal\managepackvhsost\Services\BlocksDomains
+    arguments: ['@entity_type.manager','@current_user','@database']

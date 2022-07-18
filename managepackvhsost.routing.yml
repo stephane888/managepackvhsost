@@ -13,3 +13,11 @@ managepackvhsost.settings_form:
     _form: 'Drupal\managepackvhsost\Form\SettingsForm'
   requirements:
     _permission: 'administer managepackvhsost configuration'
+
+managepackvhsost.subscribe_buy_pack:
+  path: '/managepackvhsost/subscribe-buy-pack'
+  defaults:
+    _title: 'Subscribe buy pack'
+    _form: 'Drupal\managepackvhsost\Form\SubscribeBuyPack'
+  requirements:
+    _permission: 'access content'

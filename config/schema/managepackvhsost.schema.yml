@@ -1,0 +1,7 @@
+block.settings.managepackvhsost_display_blocs_domains:
+  type: block_settings
+  label: 'Display blocs Domains block'
+  mapping:
+    foo:
+      type: string
+      label: Foo
