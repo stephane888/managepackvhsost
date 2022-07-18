@@ -27,6 +27,7 @@ class SubscribeBuyPack extends FormBase {
     $form['#attributes']['id'] = $this->getFormId();
     $this->getFormByStep($form, $form_state);
     $this->actionsButtons($form, $form_state);
+    $this->messenger()->addStatus($form_state->getValue('type_pack', 'vide'), true);
     return $form;
   }
   
@@ -63,11 +64,18 @@ class SubscribeBuyPack extends FormBase {
    * @param FormStateInterface $form_state
    */
   protected function form_stape_1(array &$form, FormStateInterface $form_state) {
+    $n = $form_state->get('page_num');
+    $tempValue = $form_state->get([
+      'tempValues',
+      $n
+    ]);
+    
     $form['type_pack'] = [
       '#type' => 'select',
       '#title' => $this->t('Selectionner un pack'),
       '#title_display' => false,
       '#required' => TRUE,
+      '#default_value' => isset($tempValue['type_pack']) ? $tempValue['type_pack'] : null,
       '#attributes' => [
         'class' => [
           'form-control-sm'
@@ -87,10 +95,16 @@ class SubscribeBuyPack extends FormBase {
    * @param FormStateInterface $form_state
    */
   protected function form_stape_2(array &$form, FormStateInterface $form_state) {
+    $n = $form_state->get('page_num');
+    $tempValue = $form_state->get([
+      'tempValues',
+      $n
+    ]);
     $form['domaine'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Domaine'),
-      '#required' => TRUE
+      '#required' => TRUE,
+      '#default_value' => isset($tempValue['domaine']) ? $tempValue['domaine'] : null
     ];
   }
   
@@ -101,10 +115,17 @@ class SubscribeBuyPack extends FormBase {
    * @param FormStateInterface $form_state
    */
   protected function form_stape_3(array &$form, FormStateInterface $form_state) {
+    $n = $form_state->get('page_num');
+    $tempValue = $form_state->get([
+      'tempValues',
+      $n
+    ]);
+    
     $form['periode'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Periode'),
-      '#required' => TRUE
+      '#required' => TRUE,
+      '#default_value' => isset($tempValue['periode']) ? $tempValue['periode'] : null
     ];
   }
   
@@ -115,10 +136,15 @@ class SubscribeBuyPack extends FormBase {
    * @param FormStateInterface $form_state
    */
   protected function form_stape_4(array &$form, FormStateInterface $form_state) {
+    $n = $form_state->get('page_num');
+    $tempValue = $form_state->get([
+      'tempValues',
+      $n
+    ]);
     $form['paiement'] = [
       '#type' => 'checkbox',
       '#title' => $this->t(' payer votre commande '),
-      '#required' => TRUE
+      '#default_value' => isset($tempValue['periode']) ? $tempValue['periode'] : ''
     ];
   }
   
@@ -197,13 +223,13 @@ class SubscribeBuyPack extends FormBase {
   }
   
   /**
-   * --
+   * On incremente page_num et on doit faire une sauvegarde des données de
+   * l'etape precedante.
    *
    * @param array $form
    * @param FormStateInterface $form_state
    */
   public function selectPreviewSubmit(array $form, FormStateInterface $form_state) {
-    $form_state->set('step_direction', '-');
     $n = $form_state->get('page_num', 1);
     if ($n > 1)
       $form_state->set('page_num', $n - 1)->setRebuild(TRUE);
@@ -218,8 +244,12 @@ class SubscribeBuyPack extends FormBase {
    * @param FormStateInterface $form_state
    */
   public function selectNextSubmit(array $form, FormStateInterface $form_state) {
-    $form_state->set('step_direction', '-');
     $n = $form_state->get('page_num', 1);
+    $form_state->set([
+      'tempValues',
+      $n
+    ], $form_state->getValues());
+    
     if ($n < 4)
       $form_state->set('page_num', $n + 1)->setRebuild(TRUE);
     else
