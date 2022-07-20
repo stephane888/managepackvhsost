@@ -1,0 +1,21 @@
+# Domain search routing definition
+domain_search.settings_tab:
+  route_name: domain_search.settings
+  title: 'Settings'
+  base_route: domain_search.settings
+
+entity.domain_search.canonical:
+  route_name: entity.domain_search.canonical
+  base_route: entity.domain_search.canonical
+  title: 'View'
+
+entity.domain_search.edit_form:
+  route_name: entity.domain_search.edit_form
+  base_route: entity.domain_search.canonical
+  title: 'Edit'
+
+entity.domain_search.delete_form:
+  route_name:  entity.domain_search.delete_form
+  base_route:  entity.domain_search.canonical
+  title: Delete
+  weight: 10

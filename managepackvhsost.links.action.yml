@@ -1,0 +1,5 @@
+entity.domain_search.add_form:
+  route_name: entity.domain_search.add_form
+  title: 'Add Domain search'
+  appears_on:
+    - entity.domain_search.collection

@@ -5,6 +5,14 @@ managepackvhsost.example:
     _controller: '\Drupal\managepackvhsost\Controller\ManagepackvhsostController::build'
   requirements:
     _permission: 'access content'
+    
+managepackvhsost.save_search:
+  path: '/managepackvhsost/save-search/{search}'
+  defaults:
+    _title: 'Example'
+    _controller: '\Drupal\managepackvhsost\Controller\ManagepackvhsostController::saveSearch'
+  requirements:
+    _permission: 'access content'
 
 managepackvhsost.settings_form:
   path: '/admin/config/system/managepackvhsost'

@@ -8,3 +8,7 @@ services:
   managepackvhsost.blocksdomains:
     class: Drupal\managepackvhsost\Services\BlocksDomains
     arguments: ['@entity_type.manager','@current_user','@database']
+    
+  managepackvhsost.search_domain:
+    class: Drupal\managepackvhsost\Services\CheckDomains
+    arguments: ['@entity_type.manager','@current_user','@messenger']

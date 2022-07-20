@@ -25,6 +25,7 @@ jquery-labelauty:
   dependencies:
     - core/jquery
 
+
 # Third-party library (CDN).
 vuejs:
   remote: https://vuejs.org

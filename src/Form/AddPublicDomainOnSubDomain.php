@@ -74,7 +74,7 @@ class AddPublicDomainOnSubDomain extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    $this->messenger()->addStatus($this->t(' The message has been sent. '));
+    // $this->messenger()->addStatus($this->t(' The message has been sent. '));
     // $form_state->setRedirect('<front>');
     $route_parameters = [];
     $options = [

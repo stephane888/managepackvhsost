@@ -2,3 +2,23 @@ administer managepackvhsost configuration:
   title: 'Administer managepackvhsost configuration'
   description: 'Optional description.'
   restrict access: true
+add domain search entities:
+  title: 'Create new Domain search entities'
+
+administer domain search entities:
+  title: 'Administer Domain search entities'
+  description: 'Allow to access the administration form to configure Domain search entities.'
+  restrict access: true
+
+delete domain search entities:
+  title: 'Delete Domain search entities'
+
+edit domain search entities:
+  title: 'Edit Domain search entities'
+
+view published domain search entities:
+  title: 'View published Domain search entities'
+
+view unpublished domain search entities:
+  title: 'View unpublished Domain search entities'
+
