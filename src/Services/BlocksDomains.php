@@ -77,7 +77,10 @@ class BlocksDomains {
       '#type' => 'html_tag',
       '#tag' => 'div',
       '#attributes' => [],
-      $domaines
+      $domaines,
+      'pager' => [
+        '#type' => 'pager'
+      ]
     ];
   }
   
@@ -90,12 +93,13 @@ class BlocksDomains {
     $query = $this->entityTypeManager->getStorage('domain_ovh_entity')->getQuery();
     $query->condition('user_id', $user_id);
     $query->pager(6);
+    $query->sort('created', 'DESC');
     $ids = $query->execute();
     
     if (!empty($ids)) {
       $entities = $this->entityTypeManager->getStorage('domain_ovh_entity')->loadMultiple($ids);
       foreach ($entities as $value) {
-        
+        // dump($value->toArray());
         // Load entity : donnee_internet_entity
         $donnee_internet_entity = $this->entityTypeManager->getStorage('donnee_internet_entity')->loadByProperties([
           'domain_ovh_entity' => $value->id(),
@@ -104,7 +108,7 @@ class BlocksDomains {
         if (!empty($donnee_internet_entity)) {
           $donnee_internet_entity = reset($donnee_internet_entity);
         }
-        
+        // dump($value->id());
         // Load entity : domain
         $domain = $this->entityTypeManager->getStorage('domain')->loadByProperties([
           'id' => $value->get('domain_id_drupal')->target_id
