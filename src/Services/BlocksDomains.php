@@ -107,6 +107,10 @@ class BlocksDomains {
         ]);
         if (!empty($donnee_internet_entity)) {
           $donnee_internet_entity = reset($donnee_internet_entity);
+          // dump('test : ', $donnee_internet_entity->id());
+        }
+        if ($value->id() == 88) {
+          // dump($donnee_internet_entity);
         }
         // dump($value->id());
         // Load entity : domain
