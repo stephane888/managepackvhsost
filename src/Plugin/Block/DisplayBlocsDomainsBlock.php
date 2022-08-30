@@ -20,25 +20,25 @@ use Drupal\layoutgenentitystyles\Services\LayoutgenentitystylesServices;
  * )
  */
 class DisplayBlocsDomainsBlock extends BlockBase implements ContainerFactoryPluginInterface {
-  
+
   /**
    * The entity type manager.
    *
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected $entityTypeManager;
-  
+
   /**
    * - BlocksDomains
    */
   protected $BlocksDomains;
-  
+
   /**
    *
    * @var LayoutgenentitystylesServices
    */
   protected $LayoutgenentitystylesServices;
-  
+
   /**
    * Constructs a new DisplayBlocsDomainsBlock instance.
    *
@@ -62,7 +62,7 @@ class DisplayBlocsDomainsBlock extends BlockBase implements ContainerFactoryPlug
     $this->BlocksDomains = $BlocksDomains;
     $this->LayoutgenentitystylesServices = $LayoutgenentitystylesServices;
   }
-  
+
   /**
    *
    * {@inheritdoc}
@@ -70,7 +70,7 @@ class DisplayBlocsDomainsBlock extends BlockBase implements ContainerFactoryPlug
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     return new static($configuration, $plugin_id, $plugin_definition, $container->get('entity_type.manager'), $container->get('managepackvhsost.blocksdomains'), $container->get('layoutgenentitystyles.add.style.theme'));
   }
-  
+
   /**
    *
    * {@inheritdoc}
@@ -81,7 +81,7 @@ class DisplayBlocsDomainsBlock extends BlockBase implements ContainerFactoryPlug
       'block_load_style_scss_js' => 'managepackvhsost/managepackvhsost'
     ];
   }
-  
+
   /**
    *
    * {@inheritdoc}
@@ -94,7 +94,7 @@ class DisplayBlocsDomainsBlock extends BlockBase implements ContainerFactoryPlug
     ];
     return $form;
   }
-  
+
   /**
    *
    * {@inheritdoc}
@@ -104,18 +104,14 @@ class DisplayBlocsDomainsBlock extends BlockBase implements ContainerFactoryPlug
     $library = $this->configuration['block_load_style_scss_js'];
     $this->LayoutgenentitystylesServices->addStyleFromModule($library, 'managepackvhsost_display_blocs_domains', 'default');
   }
-  
+
   /**
    *
    * {@inheritdoc}
    */
   public function build() {
-    $build['content'] = [
-      '#markup' => $this->t('It works!')
-    ];
-    // return $build;
     $cts = $this->BlocksDomains->getRenders();
     return $cts;
   }
-  
+
 }
