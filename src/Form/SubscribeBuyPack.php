@@ -8,6 +8,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\managepackvhsost\Services\CheckDomains;
 use Drupal\ovh_api_rest\Services\ManageBuyDomain;
 use Drupal\stripebyhabeuk\Services\PasserelleStripe;
+use Drupal\Component\Utility\NestedArray;
 
 /**
  * Provides a managepackvhsost form.
@@ -76,9 +77,17 @@ class SubscribeBuyPack extends FormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $form['#attributes']['id'] = $this->getFormId();
-    $form['#attributes']['class'][] = 'with-phone';
-    $form['#attributes']['class'][] = 'mx-auto';
-    $form['#attributes']['class'][] = 'width-phone';
+    $class = [
+      "space-padding",
+      "mb-0",
+      'with-phone',
+      'mx-auto',
+      'width-phone'
+    ];
+    $form['#attributes']['class'] = NestedArray::mergeDeepArray([
+      $form['#attributes']['class'],
+      $class
+    ]);
     //
     
     $this->goToStepeDomain($form, $form_state);
@@ -177,9 +186,36 @@ class SubscribeBuyPack extends FormBase {
     $form['domaine'] = [
       '#type' => 'textfield',
       '#title' => $this->t(' Saisir un domaine pour votre site web '),
-      '#required' => TRUE,
+      // '#required' => TRUE, on doit mettre en place un validateur de domain.
       '#default_value' => isset($tempValue['domaine']) ? $tempValue['domaine'] : $this->ManageBuyDomain->getDomain(),
-      '#description' => 'Example de domaine : mini-garage.com, blogcuisine.fr ...'
+      '#description' => 'Example de domaine : mini-garage.com, blogcuisine.fr ...',
+      '#states' => [
+        'visible' => [
+          ':input[name="domaine_exit"]' => [
+            'checked' => false
+          ]
+        ]
+      ]
+    ];
+    $form['domaine_exit'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t(" J'ai déjà mon domaine "),
+      '#required' => TRUE,
+      '#default_value' => isset($tempValue['domaine_exit']) ? $tempValue['domaine_exit'] : false
+    ];
+    $form['domaine_existing'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t(' Votre domaine '),
+      // '#required' => TRUE, on doit mettre en place un validateur de domain.
+      '#default_value' => isset($tempValue['domaine_existing']) ? $tempValue['domaine_existing'] : '',
+      '#description' => 'Le domaine est deja achété',
+      '#states' => [
+        'visible' => [
+          ':input[name="domaine_exit"]' => [
+            'checked' => true
+          ]
+        ]
+      ]
     ];
   }
   
@@ -338,7 +374,7 @@ class SubscribeBuyPack extends FormBase {
           'class' => [
             'd-inline-block',
             'w-auto',
-            'btn btn-secondary'
+            'btn btn-outline-secondary'
           ]
         ]
       ];
@@ -362,7 +398,8 @@ class SubscribeBuyPack extends FormBase {
         '#attributes' => [
           'class' => [
             'd-inline-block',
-            'w-auto'
+            'w-auto',
+            'btn-primary'
           ],
           'data-trigger' => 'run'
         ]
@@ -374,7 +411,12 @@ class SubscribeBuyPack extends FormBase {
       $form['container_buttons']['actions']['submit'] = [
         '#type' => 'submit',
         '#value' => $this->t("Valider l'achat"),
-        '#button_type' => 'secondary'
+        '#button_type' => 'secondary',
+        '#attributes' => [
+          'class' => [
+            'btn-success'
+          ]
+        ]
       ];
     }
   }
@@ -438,19 +480,51 @@ class SubscribeBuyPack extends FormBase {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
-    if (isset($form['domaine'])) {
+    /**
+     * Validation du domaine
+     */
+    if (isset($form['domaine']) || isset($form['domaine_existing'])) {
       $domaine = strtolower($form_state->getValue('domaine'));
       $form_state->setValue('domaine', $domaine);
-      if (mb_strlen($domaine) < 3) {
-        $form_state->setErrorByName('domaine', ' Nombre de caractere inssufisant ');
+      $oldDomain = strtolower($form_state->getValue('domaine_existing'));
+      $form_state->setValue('domaine_existing', $oldDomain);
+      $oldExit = $form_state->getValue('domaine_exit');
+      // si le domaine exite deja.
+      if ($oldExit) {
+        if (mb_strlen($oldDomain) < 3) {
+          $form_state->setErrorByName('domaine', ' Nombre de caractere inssufisant ');
+        }
+        else {
+          // Validation de domaine;
+          try {
+            $result = $this->ManageBuyDomain->searchDomain($oldDomain, $oldDomain);
+            if (isset($result['status_domain']) && $result['status_domain'])
+              $form_state->setErrorByName('domaine_existing', " Domaine non disponible ");
+            else
+              $this->ManageBuyDomain->saveDomain($oldDomain);
+          }
+          catch (\Exception $e) {
+            $form_state->setErrorByName('domaine_existing', $e->getMessage());
+          }
+        }
       }
       else {
-        // Validation de domaine;
-        $result = $this->ManageBuyDomain->searchDomain($domaine, $form_state->getValues());
-        if (isset($result['status_domain']) && !$result['status_domain'])
-          $form_state->setErrorByName('domaine', " Domaine non disponible, veillez nous contacter pour plus d'information ");
-        else
-          $this->ManageBuyDomain->saveDomain($domaine);
+        if (mb_strlen($domaine) < 3) {
+          $form_state->setErrorByName('domaine', ' Nombre de caractere inssufisant ');
+        }
+        else {
+          // Validation de domaine;
+          try {
+            $result = $this->ManageBuyDomain->searchDomain($domaine, $domaine);
+            if (isset($result['status_domain']) && !$result['status_domain'])
+              $form_state->setErrorByName('domaine', " Domaine non disponible, veillez nous contacter pour plus d'information ");
+            else
+              $this->ManageBuyDomain->saveDomain($domaine);
+          }
+          catch (\Exception $e) {
+            $form_state->setErrorByName('domaine', $e->getMessage());
+          }
+        }
       }
     }
   }
