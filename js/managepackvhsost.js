@@ -48,7 +48,7 @@
   Drupal.behaviors.managepackvhsost = {
     attach: function (context, settings) {
       // console.log(" settings : ", settings.managepackvhsost);
-      createElementStripe(settings.managepackvhsost);
+     // createElementStripe(settings.managepackvhsost);
     },
   };
 })(jQuery, Drupal);

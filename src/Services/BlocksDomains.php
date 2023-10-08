@@ -85,6 +85,19 @@ class BlocksDomains {
   }
   
   /**
+   * --
+   *
+   * @return number|array
+   */
+  public function getNumber() {
+    $user_id = $this->user->id();
+    $query = $this->entityTypeManager->getStorage('domain_ovh_entity')->getQuery();
+    $query->condition('user_id', $user_id);
+    $query->sort('created', 'DESC');
+    return $query->count()->execute();
+  }
+  
+  /**
    *
    * @return [EntityTypeManagerInterface]
    */
