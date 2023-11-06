@@ -599,10 +599,12 @@ class SubscribeBuyPack extends FormBase {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
+    $domain = $form_state->getValue('domaine');
+    $domaine_existing = $form_state->getValue('domaine_existing');
     /**
      * Validation du domaine
      */
-    if (!empty($form['domaine']) || !empty($form['domaine_existing'])) {
+    if (!empty($domain) || $domaine_existing) {
       $domaine = strtolower($form_state->getValue('domaine'));
       $form_state->setValue('domaine', $domaine);
       $oldDomain = strtolower($form_state->getValue('domaine_existing'));
