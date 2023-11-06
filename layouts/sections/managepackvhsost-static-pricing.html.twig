@@ -1,0 +1,23 @@
+{% if content %}
+<div class="wix-theme-price">
+	<div class="access-container space-padding-py">
+		<div class="container">
+			<div class="width-phone mx-auto font-weight-bold">
+				<div class="access-text text-center">
+					<h2 class="display-4 font-weight-bold">Nos forfaits</h2>
+					<p>Wb-horizon propose une centaine de models,un nombre
+						illimitee de pages et un hebergement GRATUIT. Choisissez un
+						hebergement Premium pour encore plus de fonctionnalites</p>
+					<button class="btn btn-primary rounded-pill">Commencer</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	{% include "@managepackvhsost/includes/tabs.html.twig" %}
+	<div class="tab-content" id="myTabContent">
+		{% include "@managepackvhsost/includes/tab1.html.twig" %}	
+	</div>
+</div>
+
+
+{% endif %}

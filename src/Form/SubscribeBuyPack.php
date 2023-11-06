@@ -9,6 +9,9 @@ use Drupal\managepackvhsost\Services\CheckDomains;
 use Drupal\ovh_api_rest\Services\ManageBuyDomain;
 use Drupal\stripebyhabeuk\Services\PasserelleStripe;
 use Drupal\Component\Utility\NestedArray;
+use Drupal\lesroidelareno\lesroidelareno;
+use Drupal\Component\Utility\Html;
+use Stephane888\Debug\Repositories\ConfigDrupal;
 
 /**
  * Provides a managepackvhsost form.
@@ -39,8 +42,8 @@ class SubscribeBuyPack extends FormBase {
    * @var array
    */
   protected $type_packs = [
-    'site-pro' => 'Site Pro',
-    'site-e-commerce' => 'Site e-Commerce'
+    'site-pro' => 'Pack standard'
+    // 'site-e-commerce' => 'Site e-Commerce'
   ];
   
   /**
@@ -77,13 +80,20 @@ class SubscribeBuyPack extends FormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $form['#attributes']['id'] = $this->getFormId();
-    $class = [
-      "space-padding",
-      "mb-0",
-      'with-phone',
-      'mx-auto',
-      'width-phone'
-    ];
+    if (!$form_state->has('page_num') && empty($_GET['type_pack'])) {
+      $class = [
+        "padding-bottom",
+        "container"
+      ];
+      $this->loadLayout($form);
+    }
+    else
+      $class = [
+        "padding-bottom",
+        "padding-top",
+        "width-phone",
+        "mx-auto"
+      ];
     $form['#attributes']['class'] = NestedArray::mergeDeepArray([
       $form['#attributes']['class'],
       $class
@@ -94,6 +104,22 @@ class SubscribeBuyPack extends FormBase {
     $this->getFormByStep($form, $form_state);
     $this->actionsButtons($form, $form_state);
     return $form;
+  }
+  
+  protected function loadLayout(&$form) {
+    /**
+     *
+     * @var \Drupal\Core\Layout\LayoutPluginManager $layoutPluginManager
+     */
+    $layoutPluginManager = \Drupal::service('plugin.manager.core.layout');
+    
+    /**
+     *
+     * @var \Drupal\managepackvhsost\Plugin\Layout\Sections\StaticPricing $instance
+     */
+    $instance = $layoutPluginManager->createInstance('managepackvhsost_static_pricing', []);
+    $regions = [];
+    $form['header'] = $instance->build($regions);
   }
   
   /**
@@ -162,9 +188,11 @@ class SubscribeBuyPack extends FormBase {
       '#title' => $this->t('Selectionner un pack'),
       '#title_display' => false,
       '#required' => TRUE,
-      '#default_value' => isset($tempValue['type_pack']) ? $tempValue['type_pack'] : null,
+      '#default_value' => isset($tempValue['type_pack']) ? $tempValue['type_pack'] : 'site-pro',
       '#attributes' => [
-        'class' => []
+        'class' => [
+          'd-none'
+        ]
       ],
       '#options' => $this->type_packs
     ];
@@ -193,6 +221,9 @@ class SubscribeBuyPack extends FormBase {
         'visible' => [
           ':input[name="domaine_exit"]' => [
             'checked' => false
+          ],
+          ':input[name="use_domaine_exit"]' => [
+            'checked' => false
           ]
         ]
       ]
@@ -200,8 +231,15 @@ class SubscribeBuyPack extends FormBase {
     $form['domaine_exit'] = [
       '#type' => 'checkbox',
       '#title' => $this->t(" J'ai déjà mon domaine "),
-      '#required' => TRUE,
-      '#default_value' => isset($tempValue['domaine_exit']) ? $tempValue['domaine_exit'] : false
+      '#required' => false,
+      '#default_value' => isset($tempValue['domaine_exit']) ? $tempValue['domaine_exit'] : false,
+      '#states' => [
+        'visible' => [
+          ':input[name="use_domaine_exit"]' => [
+            'checked' => false
+          ]
+        ]
+      ]
     ];
     $form['domaine_existing'] = [
       '#type' => 'textfield',
@@ -213,6 +251,21 @@ class SubscribeBuyPack extends FormBase {
         'visible' => [
           ':input[name="domaine_exit"]' => [
             'checked' => true
+          ]
+        ]
+      ]
+    ];
+    $ssdomain = lesroidelareno::getCurrentPrefixDomain() ? str_replace("_", "-", lesroidelareno::getCurrentPrefixDomain()) : '';
+    $form['use_domaine_exit'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t(" Utiliser le sous domaine "),
+      '#description' => $ssdomain . '.wb-horizon.com',
+      '#required' => false,
+      '#default_value' => isset($tempValue['use_domaine_exit']) ? $tempValue['use_domaine_exit'] : false,
+      '#states' => [
+        'visible' => [
+          ':input[name="domaine_exit"]' => [
+            'checked' => false
           ]
         ]
       ]
@@ -237,9 +290,9 @@ class SubscribeBuyPack extends FormBase {
       '#title' => $this->t(' Cycles de facturation '),
       '#required' => TRUE,
       '#options' => [
-        'p2y' => '2 ans <br> <span> 8€ * 24 mois </span>',
-        'p1y' => '1 an <br> <span> 10€ * 12 mois </span> ',
-        'p1m' => '1 mois <br> <span> 14 € </span>'
+        // 'p2y' => '2 ans <br> <span class="h5"> 8€ </span>',
+        'p1m' => '1 mois <br> <span class="h2 m-0"> 39,99 € </span> <small>+ 1 mois gratuit</small>',
+        'p1y' => '1 an <br> <span class="h2 m-0"> 399,9€  </span> <small>2 mois gratuit</small> '
       ],
       '#default_value' => isset($tempValue['periode']) ? $tempValue['periode'] : 'p1y'
     ];
@@ -254,6 +307,7 @@ class SubscribeBuyPack extends FormBase {
   protected function form_stape_4(array &$form, FormStateInterface $form_state) {
     $price = $this->getPrice($form, $form_state);
     $paimentIndent = $this->PasserelleStripe->paidInvoice($price);
+    $config = ConfigDrupal::config('stripebyhabeuk.settings');
     $n = $form_state->get('page_num');
     $tempValue = $form_state->get([
       'tempValues',
@@ -266,18 +320,26 @@ class SubscribeBuyPack extends FormBase {
       '#tag' => 'div',
       '#attributes' => [
         'class' => [
-          'mb-5'
+          'mb-5',
+          'd-flex',
+          'flex-column align-items-center'
         ]
       ],
       
       [
         '#type' => 'html_tag',
-        '#tag' => 'h4',
+        '#tag' => 'h2',
         '#value' => 'Payer votre commande '
       ],
       [
         '#type' => "html_tag",
         '#tag' => "strong",
+        '#attributes' => [
+          'class' => [
+            'h4',
+            'font-weight-bold'
+          ]
+        ],
         "#value" => "Total: " . $price . " €"
       ]
     ];
@@ -285,7 +347,10 @@ class SubscribeBuyPack extends FormBase {
       '#type' => 'html_tag',
       '#tag' => 'div',
       '#attributes' => [
-        'class' => []
+        'class' => [
+          'd-flex',
+          'flex-column align-items-center'
+        ]
       ],
       [
         '#type' => 'html_tag',
@@ -298,6 +363,52 @@ class SubscribeBuyPack extends FormBase {
           ]
         ]
       ]
+    ];
+    $idHtml = Html::getUniqueId('cart-ifs-' . rand(100, 999));
+    $form['titre_cart'] = [
+      '#type' => 'html_tag',
+      '#tag' => 'span',
+      "#attributes" => [
+        'class' => []
+      ],
+      '#value' => t('Enter credit card information')
+    ];
+    $form['stripebyhabeuk_payment_method_id'] = [
+      '#type' => 'hidden',
+      '#attributes' => [
+        'id' => 'payment-method-id' . $idHtml
+      ]
+    ];
+    $form['cart_information'] = [
+      '#type' => 'html_tag',
+      '#tag' => 'section',
+      "#attributes" => [
+        'id' => $idHtml,
+        'class' => [
+          'border',
+          'mb-3',
+          'p-4'
+        ]
+      ]
+    ];
+    $form['cart_information'] = [
+      '#type' => 'html_tag',
+      '#tag' => 'section',
+      "#attributes" => [
+        'id' => $idHtml,
+        'class' => [
+          'border',
+          'mb-3',
+          'p-4'
+        ]
+      ]
+    ];
+    $form['#attached']['library'][] = 'stripebyhabeuk/stripejsinit';
+    // pass and attach datas.
+    $form['#attached']['drupalSettings']['stripebyhabeuk'] = [
+      'publishableKey' => $config['api_key_test'],
+      'idhtml' => $idHtml,
+      'enable_credit_card_logos' => FALSE
     ];
     
     //
@@ -322,10 +433,10 @@ class SubscribeBuyPack extends FormBase {
           return 192;
           break;
         case "p1y":
-          return 120;
+          return 399.9;
           break;
         case "p1m":
-          return 14;
+          return 39.99;
           break;
         default:
           return 5;
@@ -378,10 +489,14 @@ class SubscribeBuyPack extends FormBase {
           ]
         ]
       ];
-    if ($form_state->get('page_num') < self::$max_stape)
+    
+    if ($form_state->get('page_num') < self::$max_stape) {
+      $text = 'Suivant';
+      if ($form_state->get('page_num') == 1)
+        $text = 'Commencer';
       $form['container_buttons']['next'] = [
         '#type' => 'submit',
-        '#value' => 'Suivant',
+        '#value' => $text,
         '#button_type' => 'secondary',
         '#submit' => [
           [
@@ -399,18 +514,22 @@ class SubscribeBuyPack extends FormBase {
           'class' => [
             'd-inline-block',
             'w-auto',
-            'btn-primary'
+            'h-auto',
+            'btn-primary',
+            'btn rounded-pill'
           ],
           'data-trigger' => 'run'
         ]
       ];
+    }
+    
     if ($form_state->get('page_num') == self::$max_stape) {
       $form['container_buttons']['actions'] = [
         '#type' => 'actions'
       ];
       $form['container_buttons']['actions']['submit'] = [
         '#type' => 'submit',
-        '#value' => $this->t("Valider l'achat"),
+        '#value' => $this->t("Payer votre forfait"),
         '#button_type' => 'secondary',
         '#attributes' => [
           'class' => [
@@ -483,7 +602,7 @@ class SubscribeBuyPack extends FormBase {
     /**
      * Validation du domaine
      */
-    if (isset($form['domaine']) || isset($form['domaine_existing'])) {
+    if (!empty($form['domaine']) || !empty($form['domaine_existing'])) {
       $domaine = strtolower($form_state->getValue('domaine'));
       $form_state->setValue('domaine', $domaine);
       $oldDomain = strtolower($form_state->getValue('domaine_existing'));
@@ -497,11 +616,17 @@ class SubscribeBuyPack extends FormBase {
         else {
           // Validation de domaine;
           try {
-            $result = $this->ManageBuyDomain->searchDomain($oldDomain, $oldDomain);
-            if (isset($result['status_domain']) && $result['status_domain'])
-              $form_state->setErrorByName('domaine_existing', " Domaine non disponible ");
-            else
-              $this->ManageBuyDomain->saveDomain($oldDomain);
+          /**
+           * Pour le moment on desactive cette etape, aucune consistance de la
+           * garder.
+           */
+            // $result = $this->ManageBuyDomain->searchDomain($oldDomain,
+            // $oldDomain);
+            // if (isset($result['status_domain']) && $result['status_domain'])
+            // $form_state->setErrorByName('domaine_existing', " Domaine non
+            // disponible ");
+            // else
+            // $this->ManageBuyDomain->saveDomain($oldDomain);
           }
           catch (\Exception $e) {
             $form_state->setErrorByName('domaine_existing', $e->getMessage());
