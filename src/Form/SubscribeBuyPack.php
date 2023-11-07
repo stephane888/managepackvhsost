@@ -82,8 +82,8 @@ class SubscribeBuyPack extends FormBase {
   public function buildForm(array $form, FormStateInterface $form_state) {
     $form['#attributes']['id'] = $this->getFormId();
     // ### for test price
-    if (!$form_state->has('page_num'))
-      $form_state->set('page_num', 5);
+    // if (!$form_state->has('page_num'))
+    // $form_state->set('page_num', 5);
     // ### for test price
     if ((!$form_state->has('page_num') || $form_state->get('page_num') == 1) && empty($_GET['type_pack'])) {
       $class = [

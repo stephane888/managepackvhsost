@@ -24,7 +24,7 @@ class ManagepackvhsostController extends ControllerBase {
     $payment_intent_client_secret = $request->get('payment_intent_client_secret');
     $payment_intent = $request->get('payment_intent');
     if ($redirect_status == 'succeeded') {
-      $this->messenger()->addError("Paiement effectuer avec succes.");
+      $this->messenger()->addStatus("Paiement effectué avec succes.");
     }
     else {
       $this->messenger()->addError("Une erreur s'est produite");

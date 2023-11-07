@@ -3,6 +3,7 @@
 namespace Drupal\managepackvhsost\Form;
 
 use Drupal\Core\Form\FormStateInterface;
+use Stephane888\Debug\ExceptionDebug;
 
 /**
  * Provides a managepackvhsost form.
@@ -120,15 +121,12 @@ trait SubscribeBuyPackSteps {
         case "p1m":
           return 39.99;
           break;
-        default:
-          return 8; // For test, il faut absolument supprimer cette ligne et
-                    // renvoyer une erreur.
-          break;
       }
     }
+    ExceptionDebug::exception("Error to get price");
     // For test, il faut absolument supprimer cette ligne et
     // renvoyer une erreur.
-    return 8;
+    // return 8;
   }
   
   /**
