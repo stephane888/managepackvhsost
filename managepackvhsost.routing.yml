@@ -1,8 +1,8 @@
 managepackvhsost.example:
-  path: '/managepackvhsost/example'
+  path: '/managepackvhsost/afterpay'
   defaults:
     _title: 'Example'
-    _controller: '\Drupal\managepackvhsost\Controller\ManagepackvhsostController::build'
+    _controller: '\Drupal\managepackvhsost\Controller\ManagepackvhsostController::afterpay'
   requirements:
     _permission: 'access content'
     

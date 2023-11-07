@@ -121,10 +121,14 @@ trait SubscribeBuyPackSteps {
           return 39.99;
           break;
         default:
-          return 5;
+          return 8; // For test, il faut absolument supprimer cette ligne et
+                    // renvoyer une erreur.
           break;
       }
     }
+    // For test, il faut absolument supprimer cette ligne et
+    // renvoyer une erreur.
+    return 8;
   }
   
   /**
@@ -134,6 +138,8 @@ trait SubscribeBuyPackSteps {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $this->messenger()->addStatus($this->t('The message has been sent.'));
     // $form_state->setRedirect('<front>');
+    $stripebyhabeuk_payment_method_id = $form_state->getValue('stripebyhabeuk_payment_method_id');
+    \Drupal::messenger()->addStatus(' stripebyhabeuk_payment_method_id : ' . $stripebyhabeuk_payment_method_id);
   }
   
   /**
@@ -218,6 +224,7 @@ trait SubscribeBuyPackSteps {
         '#type' => 'submit',
         '#value' => 'Precedent',
         '#button_type' => 'secondary',
+        '#name' => 'precedant',
         '#submit' => [
           [
             $this,

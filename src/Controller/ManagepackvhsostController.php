@@ -6,6 +6,8 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\managepackvhsost\Entity\DomainSearch;
 use Drupal\Component\Serialization\Json;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Stephane888\Debug\ExceptionExtractMessage;
 
 /**
  * Returns responses for managepackvhsost routes.
@@ -16,11 +18,19 @@ class ManagepackvhsostController extends ControllerBase {
   /**
    * Builds the response.
    */
-  public function build() {
-    $build['content'] = [
-      '#type' => 'item',
-      '#markup' => $this->t('It works!')
-    ];
+  public function afterpay(Request $request) {
+    $build = [];
+    $redirect_status = $request->get('redirect_status');
+    $payment_intent_client_secret = $request->get('payment_intent_client_secret');
+    $payment_intent = $request->get('payment_intent');
+    if ($redirect_status == 'succeeded') {
+      $this->messenger()->addError("Paiement effectuer avec succes.");
+    }
+    else {
+      $this->messenger()->addError("Une erreur s'est produite");
+      $debug = "Error de paiement ; " . $redirect_status . " || " . $payment_intent_client_secret . " || " . $payment_intent;
+      $this->getLogger('managepackvhsost')->critical($debug);
+    }
     
     return $build;
   }

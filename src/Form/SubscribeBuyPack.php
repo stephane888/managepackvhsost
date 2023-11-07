@@ -81,6 +81,10 @@ class SubscribeBuyPack extends FormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $form['#attributes']['id'] = $this->getFormId();
+    // ### for test price
+    if (!$form_state->has('page_num'))
+      $form_state->set('page_num', 5);
+    // ### for test price
     if ((!$form_state->has('page_num') || $form_state->get('page_num') == 1) && empty($_GET['type_pack'])) {
       $class = [
         "padding-bottom"
@@ -129,6 +133,7 @@ class SubscribeBuyPack extends FormBase {
         case '5':
           $this->formPaiement($form, $form_state);
           break;
+        
         default:
           $this->messenger()->addWarning('Bad stepe');
           break;
@@ -315,13 +320,15 @@ class SubscribeBuyPack extends FormBase {
   }
   
   /**
-   * Paiement de la transaction
+   * 1- Generer le token client pour le payment.
+   * 2- Genere le formulaire permettant d'entrer les informations de la CB.
    *
    * @param array $form
    * @param FormStateInterface $form_state
    */
   protected function formPaiement(array &$form, FormStateInterface $form_state) {
     $price = $this->getPrice($form, $form_state);
+    $request = \Drupal::requestStack()->getCurrentRequest();
     $paimentIndent = $this->PasserelleStripe->paidInvoice($price);
     $config = ConfigDrupal::config('stripebyhabeuk.settings');
     $n = $form_state->get('page_num');
@@ -375,7 +382,8 @@ class SubscribeBuyPack extends FormBase {
           'src' => '/' . drupal_get_path('module', 'managepackvhsost') . '/img/us-available-brands.e0ae81a0.svg',
           'class' => [
             'img-fluid',
-            'mb-4'
+            'mb-4',
+            'd-none'
           ]
         ]
       ]
@@ -389,10 +397,10 @@ class SubscribeBuyPack extends FormBase {
       ],
       '#value' => t('Enter credit card information')
     ];
-    $form['stripebyhabeuk_payment_method_id'] = [
+    $form['stripebyhabeuk_payment_intent_id'] = [
       '#type' => 'hidden',
       '#attributes' => [
-        'id' => 'payment-method-id' . $idHtml
+        'id' => 'payment-intent-id' . $idHtml
       ]
     ];
     $form['cart_information'] = [
@@ -424,12 +432,15 @@ class SubscribeBuyPack extends FormBase {
     $form['#attached']['drupalSettings']['stripebyhabeuk'] = [
       'publishableKey' => $config['api_key_test'],
       'idhtml' => $idHtml,
-      'enable_credit_card_logos' => FALSE
+      'enable_credit_card_logos' => FALSE,
+      'clientSecret' => $paimentIndent['client_secret'],
+      'payment_status' => "requires_payment_method",
+      'return_url' => $request->getScheme() . '://' . $request->getHttpHost() . '/managepackvhsost/afterpay'
     ];
-    
     //
-    $form['#attached']['library'][] = 'managepackvhsost/managepackvhsost';
-    $form['#attached']['drupalSettings']['managepackvhsost']['client_secret'] = $paimentIndent['client_secret'];
+    // $form['#attached']['library'][] = 'managepackvhsost/managepackvhsost';
+    // $form['#attached']['drupalSettings']['managepackvhsost']['client_secret']
+    // = $paimentIndent['client_secret'];
   }
   
   /**
