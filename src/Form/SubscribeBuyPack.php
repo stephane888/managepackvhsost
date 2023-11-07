@@ -17,7 +17,8 @@ use Stephane888\Debug\Repositories\ConfigDrupal;
  * Provides a managepackvhsost form.
  */
 class SubscribeBuyPack extends FormBase {
-  private static $max_stape = 4;
+  use SubscribeBuyPackSteps;
+  private static $max_stape = 5;
   
   /**
    *
@@ -80,10 +81,9 @@ class SubscribeBuyPack extends FormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $form['#attributes']['id'] = $this->getFormId();
-    if (!$form_state->has('page_num') && empty($_GET['type_pack'])) {
+    if ((!$form_state->has('page_num') || $form_state->get('page_num') == 1) && empty($_GET['type_pack'])) {
       $class = [
-        "padding-bottom",
-        "container"
+        "padding-bottom"
       ];
       $this->loadLayout($form);
     }
@@ -106,39 +106,6 @@ class SubscribeBuyPack extends FormBase {
     return $form;
   }
   
-  protected function loadLayout(&$form) {
-    /**
-     *
-     * @var \Drupal\Core\Layout\LayoutPluginManager $layoutPluginManager
-     */
-    $layoutPluginManager = \Drupal::service('plugin.manager.core.layout');
-    
-    /**
-     *
-     * @var \Drupal\managepackvhsost\Plugin\Layout\Sections\StaticPricing $instance
-     */
-    $instance = $layoutPluginManager->createInstance('managepackvhsost_static_pricing', []);
-    $regions = [];
-    $form['header'] = $instance->build($regions);
-  }
-  
-  /**
-   * Permet de se place directement sur l'etape du domaine.
-   */
-  protected function goToStepeDomain(&$form, FormStateInterface $form_state) {
-    if (!$form_state->has('page_num') && !empty($_GET['type_pack'])) {
-      if (array_key_exists($_GET['type_pack'], $this->type_packs)) {
-        $form_state->set('page_num', 2);
-        $form_state->set([
-          'tempValues',
-          1
-        ], [
-          'domaine' => $_GET['type_pack']
-        ]);
-      }
-    }
-  }
-  
   /**
    *
    * @param array $form
@@ -148,16 +115,19 @@ class SubscribeBuyPack extends FormBase {
     if ($form_state->has('page_num')) {
       switch ($form_state->get('page_num')) {
         case '1':
-          $this->form_stape_1($form, $form_state);
+          $this->formSelectPack($form, $form_state);
           break;
         case '2':
-          $this->form_stape_2($form, $form_state);
+          $this->formSelectType($form, $form_state);
           break;
         case '3':
-          $this->form_stape_3($form, $form_state);
+          $this->formGetDomainValue($form, $form_state);
           break;
         case '4':
-          $this->form_stape_4($form, $form_state);
+          $this->formCycleFacturation($form, $form_state);
+          break;
+        case '5':
+          $this->formPaiement($form, $form_state);
           break;
         default:
           $this->messenger()->addWarning('Bad stepe');
@@ -166,7 +136,7 @@ class SubscribeBuyPack extends FormBase {
     }
     else {
       $form_state->set('page_num', 1);
-      $this->form_stape_1($form, $form_state);
+      $this->formSelectPack($form, $form_state);
     }
   }
   
@@ -176,7 +146,7 @@ class SubscribeBuyPack extends FormBase {
    * @param array $form
    * @param FormStateInterface $form_state
    */
-  protected function form_stape_1(array &$form, FormStateInterface $form_state) {
+  protected function formSelectPack(array &$form, FormStateInterface $form_state) {
     $n = $form_state->get('page_num');
     $tempValue = $form_state->get([
       'tempValues',
@@ -199,77 +169,122 @@ class SubscribeBuyPack extends FormBase {
   }
   
   /**
-   * Selection du domaine
+   * Permet de selectionner l'achat d'un nouveau domaine, un domaine existant
+   * ...
    *
    * @param array $form
    * @param FormStateInterface $form_state
    */
-  protected function form_stape_2(array &$form, FormStateInterface $form_state) {
+  protected function formSelectType(array &$form, FormStateInterface $form_state) {
     $n = $form_state->get('page_num');
     $tempValue = $form_state->get([
       'tempValues',
       $n
     ]);
+    $form['select_type_action'] = [
+      '#type' => 'radios',
+      '#required' => true,
+      '#options' => [
+        'new_domain' => "Acheter un nouveau domaine",
+        'old_domain' => "J'ai déjà un domaine",
+        'sub_domain' => "Je conseve mon sous domaine"
+      ],
+      '#default_value' => isset($tempValue['select_type_action']) ? $tempValue['select_type_action'] : 'new_domain'
+    ];
+  }
+  
+  /**
+   * Selection du domaine
+   *
+   * @param array $form
+   * @param FormStateInterface $form_state
+   */
+  protected function formGetDomainValue(array &$form, FormStateInterface $form_state) {
+    $n = $form_state->get('page_num');
+    $tempValue = $form_state->get([
+      'tempValues',
+      $n
+    ]);
+    $select_type_action = $form_state->getValue('select_type_action');
+    if ($select_type_action == 'new_domain') {
+      $form['domaine'] = [
+        '#type' => 'textfield',
+        '#title' => $this->t(' Saisir un domaine pour votre site web '),
+        // '#required' => TRUE, on doit mettre en place un validateur de domain.
+        '#default_value' => isset($tempValue['domaine']) ? $tempValue['domaine'] : $this->ManageBuyDomain->getDomain(),
+        '#description' => 'Example de domaine : mini-garage.com, blogcuisine.fr ...',
+        '#required' => true
+      ];
+    }
     
-    $form['domaine'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t(' Saisir un domaine pour votre site web '),
-      // '#required' => TRUE, on doit mettre en place un validateur de domain.
-      '#default_value' => isset($tempValue['domaine']) ? $tempValue['domaine'] : $this->ManageBuyDomain->getDomain(),
-      '#description' => 'Example de domaine : mini-garage.com, blogcuisine.fr ...',
-      '#states' => [
-        'visible' => [
-          ':input[name="domaine_exit"]' => [
-            'checked' => false
-          ],
-          ':input[name="use_domaine_exit"]' => [
-            'checked' => false
-          ]
-        ]
-      ]
-    ];
-    $form['domaine_exit'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t(" J'ai déjà mon domaine "),
-      '#required' => false,
-      '#default_value' => isset($tempValue['domaine_exit']) ? $tempValue['domaine_exit'] : false,
-      '#states' => [
-        'visible' => [
-          ':input[name="use_domaine_exit"]' => [
-            'checked' => false
-          ]
-        ]
-      ]
-    ];
-    $form['domaine_existing'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t(' Votre domaine '),
-      // '#required' => TRUE, on doit mettre en place un validateur de domain.
-      '#default_value' => isset($tempValue['domaine_existing']) ? $tempValue['domaine_existing'] : '',
-      '#description' => 'Le domaine est deja achété',
-      '#states' => [
-        'visible' => [
-          ':input[name="domaine_exit"]' => [
-            'checked' => true
-          ]
-        ]
-      ]
-    ];
+    // $form['domaine_exit'] = [
+    // '#type' => 'checkbox',
+    // '#title' => $this->t(" J'ai déjà mon domaine "),
+    // '#required' => false,
+    // '#default_value' => isset($tempValue['domaine_exit']) ?
+    // $tempValue['domaine_exit'] : false,
+    // '#states' => [
+    // 'visible' => [
+    // ':input[name="use_domaine_exit"]' => [
+    // 'checked' => false
+    // ]
+    // ]
+    // ]
+    // ];
+    elseif ($select_type_action == 'old_domain') {
+      $form['domaine_existing'] = [
+        '#type' => 'textfield',
+        '#title' => $this->t(' Votre domaine '),
+        // '#required' => TRUE, on doit mettre en place un validateur de domain.
+        '#default_value' => isset($tempValue['domaine_existing']) ? $tempValue['domaine_existing'] : '',
+        '#description' => 'Le domaine est deja achété',
+        '#required' => true
+      ];
+    }
+    elseif ($select_type_action == 'sub_domain') {
+      $options = [];
+      $uid = \Drupal::currentUser()->id();
+      $query = \Drupal::entityTypeManager()->getStorage('domain_ovh_entity')->getQuery();
+      $query->condition("user_id", $uid);
+      $query->condition('status', true);
+      $query->accessCheck(TRUE);
+      $ids = $query->execute();
+      if ($ids) {
+        $entites = \Drupal::entityTypeManager()->getStorage('domain_ovh_entity')->loadMultiple($ids);
+        foreach ($entites as $entity) {
+          /**
+           *
+           * @var \Drupal\ovh_api_rest\Entity\DomainOvhEntity $entity
+           */
+          $options[$entity->getDomainIdDrupal()] = $entity->getsubDomain();
+        }
+      }
+      $form['sub_domain'] = [
+        '#type' => 'select',
+        '#title' => $this->t(' Votre domaine '),
+        // '#required' => TRUE, on doit mettre en place un validateur de domain.
+        '#default_value' => isset($tempValue['domaine_existing']) ? $tempValue['domaine_existing'] : '',
+        '#description' => 'Le domaine est deja achété',
+        '#options' => $options
+      ];
+    }
+    
     $ssdomain = lesroidelareno::getCurrentPrefixDomain() ? str_replace("_", "-", lesroidelareno::getCurrentPrefixDomain()) : '';
-    $form['use_domaine_exit'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t(" Utiliser le sous domaine "),
-      '#description' => $ssdomain . '.wb-horizon.com',
-      '#required' => false,
-      '#default_value' => isset($tempValue['use_domaine_exit']) ? $tempValue['use_domaine_exit'] : false,
-      '#states' => [
-        'visible' => [
-          ':input[name="domaine_exit"]' => [
-            'checked' => false
-          ]
-        ]
-      ]
-    ];
+    // $form['use_domaine_exit'] = [
+    // '#type' => 'checkbox',
+    // '#title' => $this->t(" Utiliser le sous domaine "),
+    // '#description' => $ssdomain . '.wb-horizon.com',
+    // '#required' => false,
+    // '#default_value' => isset($tempValue['use_domaine_exit']) ?
+    // $tempValue['use_domaine_exit'] : false,
+    // '#states' => [
+    // 'visible' => [
+    // ':input[name="domaine_exit"]' => [
+    // 'checked' => false
+    // ]
+    // ]
+    // ]
+    // ];
   }
   
   /**
@@ -278,8 +293,9 @@ class SubscribeBuyPack extends FormBase {
    * @param array $form
    * @param FormStateInterface $form_state
    */
-  protected function form_stape_3(array &$form, FormStateInterface $form_state) {
+  protected function formCycleFacturation(array &$form, FormStateInterface $form_state) {
     $n = $form_state->get('page_num');
+    
     $tempValue = $form_state->get([
       'tempValues',
       $n
@@ -304,7 +320,7 @@ class SubscribeBuyPack extends FormBase {
    * @param array $form
    * @param FormStateInterface $form_state
    */
-  protected function form_stape_4(array &$form, FormStateInterface $form_state) {
+  protected function formPaiement(array &$form, FormStateInterface $form_state) {
     $price = $this->getPrice($form, $form_state);
     $paimentIndent = $this->PasserelleStripe->paidInvoice($price);
     $config = ConfigDrupal::config('stripebyhabeuk.settings');
@@ -418,184 +434,6 @@ class SubscribeBuyPack extends FormBase {
   
   /**
    *
-   * @param array $form
-   * @param FormStateInterface $form_state
-   */
-  function getPrice(array $form, FormStateInterface $form_state) {
-    $tempValue = $form_state->get([
-      'tempValues',
-      3
-    ]);
-    
-    if (!empty($tempValue["periode"])) {
-      switch ($tempValue["periode"]) {
-        case "p2y":
-          return 192;
-          break;
-        case "p1y":
-          return 399.9;
-          break;
-        case "p1m":
-          return 39.99;
-          break;
-        default:
-          return 5;
-          break;
-      }
-    }
-  }
-  
-  /**
-   *
-   * @param array $form
-   * @param FormStateInterface $form_state
-   */
-  protected function actionsButtons(array &$form, FormStateInterface $form_state) {
-    $form['container_buttons'] = [
-      '#type' => 'html_tag',
-      '#tag' => 'div',
-      '#attributes' => [
-        'class' => [
-          'd-flex',
-          'justify-content-around',
-          'align-items-center',
-          'actions-buttons'
-        ]
-      ],
-      '#weight' => 45
-    ];
-    if ($form_state->get('page_num') > 1)
-      $form['container_buttons']['previews'] = [
-        '#type' => 'submit',
-        '#value' => 'Precedent',
-        '#button_type' => 'secondary',
-        '#submit' => [
-          [
-            $this,
-            'selectPreviewSubmit'
-          ]
-        ],
-        '#ajax' => [
-          'callback' => '::selectPreviewsCallback',
-          'wrapper' => $this->getFormId(),
-          'effect' => 'fade',
-          'event' => 'click'
-        ],
-        '#attributes' => [
-          'class' => [
-            'd-inline-block',
-            'w-auto',
-            'btn btn-outline-secondary'
-          ]
-        ]
-      ];
-    
-    if ($form_state->get('page_num') < self::$max_stape) {
-      $text = 'Suivant';
-      if ($form_state->get('page_num') == 1)
-        $text = 'Commencer';
-      $form['container_buttons']['next'] = [
-        '#type' => 'submit',
-        '#value' => $text,
-        '#button_type' => 'secondary',
-        '#submit' => [
-          [
-            $this,
-            'selectNextSubmit'
-          ]
-        ],
-        '#ajax' => [
-          'callback' => '::selectNextCallback',
-          'wrapper' => $this->getFormId(),
-          'effect' => 'fade',
-          'event' => 'click'
-        ],
-        '#attributes' => [
-          'class' => [
-            'd-inline-block',
-            'w-auto',
-            'h-auto',
-            'btn-primary',
-            'btn rounded-pill'
-          ],
-          'data-trigger' => 'run'
-        ]
-      ];
-    }
-    
-    if ($form_state->get('page_num') == self::$max_stape) {
-      $form['container_buttons']['actions'] = [
-        '#type' => 'actions'
-      ];
-      $form['container_buttons']['actions']['submit'] = [
-        '#type' => 'submit',
-        '#value' => $this->t("Payer votre forfait"),
-        '#button_type' => 'secondary',
-        '#attributes' => [
-          'class' => [
-            'btn-success'
-          ]
-        ]
-      ];
-    }
-  }
-  
-  /**
-   * On incremente page_num et on doit faire une sauvegarde des données de
-   * l'etape precedante.
-   *
-   * @param array $form
-   * @param FormStateInterface $form_state
-   */
-  public function selectPreviewSubmit(array $form, FormStateInterface $form_state) {
-    $n = $form_state->get('page_num', 1);
-    if ($n > 1)
-      $form_state->set('page_num', $n - 1)->setRebuild(TRUE);
-    else
-      $form_state->set('page_num', 1)->setRebuild(TRUE);
-  }
-  
-  /**
-   * --
-   *
-   * @param array $form
-   * @param FormStateInterface $form_state
-   */
-  public function selectNextSubmit(array $form, FormStateInterface $form_state) {
-    $n = $form_state->get('page_num', 1);
-    $form_state->set([
-      'tempValues',
-      $n
-    ], $form_state->getValues());
-    
-    if ($n < 4)
-      $form_state->set('page_num', $n + 1)->setRebuild(TRUE);
-    else
-      $form_state->set('page_num', $n)->setRebuild(TRUE);
-  }
-  
-  /**
-   *
-   * @param array $form
-   * @param FormStateInterface $form_state
-   * @return []
-   */
-  public function selectPreviewsCallback(array $form, FormStateInterface $form_state) {
-    return $form;
-  }
-  
-  /**
-   *
-   * @param array $form
-   * @param FormStateInterface $form_state
-   * @return []
-   */
-  public function selectNextCallback(array $form, FormStateInterface $form_state) {
-    return $form;
-  }
-  
-  /**
-   *
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
@@ -635,7 +473,7 @@ class SubscribeBuyPack extends FormBase {
           }
         }
       }
-      else {
+      elseif ($domaine) {
         if (mb_strlen($domaine) < 3) {
           $form_state->setErrorByName('domaine', ' Nombre de caractere inssufisant ');
         }
@@ -654,73 +492,6 @@ class SubscribeBuyPack extends FormBase {
         }
       }
     }
-  }
-  
-  /**
-   *
-   * {@inheritdoc}
-   */
-  public function submitForm(array &$form, FormStateInterface $form_state) {
-    $this->messenger()->addStatus($this->t('The message has been sent.'));
-    // $form_state->setRedirect('<front>');
-  }
-  
-  /**
-   *
-   * @param array $form
-   * @param FormStateInterface $form_state
-   */
-  protected function fieldsPaiement(array &$form, FormStateInterface $form_state) {
-    $form['paiements'] = [
-      '#type' => 'html_tag',
-      '#tag' => 'div',
-      '#attributes' => [
-        'class' => [
-          'row'
-        ]
-      ],
-      '#weight' => 20
-    ];
-    $form['paiements']['left'] = [
-      '#type' => 'html_tag',
-      '#tag' => 'div',
-      '#attributes' => [
-        'class' => [
-          'col-md-12'
-        ]
-      ]
-    ];
-    $form['paiements']['right'] = [
-      '#type' => 'html_tag',
-      '#tag' => 'div',
-      '#attributes' => [
-        'class' => [
-          'col-md-12'
-        ]
-      ]
-    ];
-    $form['paiements']['left']['paiement-stripe'] = [
-      '#type' => 'html_tag',
-      '#tag' => 'div',
-      '#attributes' => [
-        'class' => [],
-        'id' => 'payment-element'
-      ],
-      '#weight' => 20
-    ];
-    //
-    $form['paiements']['left']['error-message'] = [
-      '#type' => 'html_tag',
-      '#tag' => 'div',
-      '#attributes' => [
-        'class' => [
-          'error--message'
-        ],
-        'id' => '#error-message'
-      ],
-      '#weight' => 21
-    ];
-    //
   }
   
 }
