@@ -74,7 +74,6 @@ trait SubscribeBuyPackSteps {
    */
   public function selectPreviewSubmit(array $form, FormStateInterface $form_state) {
     $n = $form_state->get('page_num', 1);
-    
     if ($n > 1)
       $form_state->set('page_num', $n - 1)->setRebuild(TRUE);
     else
@@ -89,7 +88,6 @@ trait SubscribeBuyPackSteps {
    */
   public function selectNextSubmit(array $form, FormStateInterface $form_state) {
     $n = $form_state->get('page_num', 1);
-    
     $form_state->set([
       'tempValues',
       $n
@@ -137,9 +135,6 @@ trait SubscribeBuyPackSteps {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $this->messenger()->addStatus($this->t('The message has been sent.'));
-    // $form_state->setRedirect('<front>');
-    $stripebyhabeuk_payment_method_id = $form_state->getValue('stripebyhabeuk_payment_method_id');
-    \Drupal::messenger()->addStatus(' stripebyhabeuk_payment_method_id : ' . $stripebyhabeuk_payment_method_id);
   }
   
   /**

@@ -119,7 +119,6 @@ class SubscribeBuyPack extends FormBase {
    */
   protected function getFormByStep(&$form, FormStateInterface $form_state) {
     if ($form_state->has('page_num')) {
-      \Drupal::messenger()->addStatus('page : ' . $form_state->get('page_num'), true);
       switch ($form_state->get('page_num')) {
         case '1':
           $this->formSelectPack($form, $form_state);
@@ -136,7 +135,6 @@ class SubscribeBuyPack extends FormBase {
         case '5':
           $this->formPaiement($form, $form_state);
           break;
-        
         default:
           $this->messenger()->addWarning('Bad stepe');
           break;
@@ -374,6 +372,7 @@ class SubscribeBuyPack extends FormBase {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
+    // dump($form);
     $domain = $form_state->getValue('domaine');
     $domaine_existing = $form_state->getValue('domaine_existing');
     /**
