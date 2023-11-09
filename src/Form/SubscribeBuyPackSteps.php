@@ -4,6 +4,8 @@ namespace Drupal\managepackvhsost\Form;
 
 use Drupal\Core\Form\FormStateInterface;
 use Stephane888\Debug\ExceptionDebug;
+use Drupal\Component\Utility\Html;
+use Stephane888\Debug\Repositories\ConfigDrupal;
 
 /**
  * Provides a managepackvhsost form.
@@ -145,57 +147,108 @@ trait SubscribeBuyPackSteps {
    * @param array $form
    * @param FormStateInterface $form_state
    */
-  protected function fieldsPaiement(array &$form, FormStateInterface $form_state) {
-    $form['paiements'] = [
+  protected function fieldsPaiement(array &$form, FormStateInterface $form_state, $price, $paimentIndent) {
+    $config = ConfigDrupal::config('stripebyhabeuk.settings');
+    $request = \Drupal::requestStack()->getCurrentRequest();
+    $form['paiement-info'] = [
       '#type' => 'html_tag',
       '#tag' => 'div',
       '#attributes' => [
         'class' => [
-          'row'
+          'mb-5',
+          'd-flex',
+          'flex-column align-items-center'
         ]
       ],
-      '#weight' => 20
-    ];
-    $form['paiements']['left'] = [
-      '#type' => 'html_tag',
-      '#tag' => 'div',
-      '#attributes' => [
-        'class' => [
-          'col-md-12'
-        ]
-      ]
-    ];
-    $form['paiements']['right'] = [
-      '#type' => 'html_tag',
-      '#tag' => 'div',
-      '#attributes' => [
-        'class' => [
-          'col-md-12'
-        ]
-      ]
-    ];
-    $form['paiements']['left']['paiement-stripe'] = [
-      '#type' => 'html_tag',
-      '#tag' => 'div',
-      '#attributes' => [
-        'class' => [],
-        'id' => 'payment-element'
+      
+      [
+        '#type' => 'html_tag',
+        '#tag' => 'h2',
+        '#value' => 'Payer votre commande '
       ],
-      '#weight' => 20
-    ];
-    //
-    $form['paiements']['left']['error-message'] = [
-      '#type' => 'html_tag',
-      '#tag' => 'div',
-      '#attributes' => [
-        'class' => [
-          'error--message'
+      [
+        '#type' => "html_tag",
+        '#tag' => "strong",
+        '#attributes' => [
+          'class' => [
+            'h4',
+            'font-weight-bold'
+          ]
         ],
-        'id' => '#error-message'
-      ],
-      '#weight' => 21
+        "#value" => "Total: " . $price . " €"
+      ]
     ];
-    //
+    $form['paiement-info-img'] = [
+      '#type' => 'html_tag',
+      '#tag' => 'div',
+      '#attributes' => [
+        'class' => [
+          'd-flex',
+          'flex-column align-items-center'
+        ]
+      ],
+      [
+        '#type' => 'html_tag',
+        '#tag' => 'img',
+        '#attributes' => [
+          'src' => '/' . drupal_get_path('module', 'managepackvhsost') . '/img/us-available-brands.e0ae81a0.svg',
+          'class' => [
+            'img-fluid',
+            'mb-4',
+            'd-none'
+          ]
+        ]
+      ]
+    ];
+    $idHtml = Html::getUniqueId('cart-ifs-' . rand(100, 999));
+    $form['titre_cart'] = [
+      '#type' => 'html_tag',
+      '#tag' => 'span',
+      "#attributes" => [
+        'class' => []
+      ],
+      '#value' => t('Enter credit card information')
+    ];
+    $form['stripebyhabeuk_payment_intent_id'] = [
+      '#type' => 'hidden',
+      '#attributes' => [
+        'id' => 'payment-intent-id' . $idHtml
+      ]
+    ];
+    $form['cart_information'] = [
+      '#type' => 'html_tag',
+      '#tag' => 'section',
+      "#attributes" => [
+        'id' => $idHtml,
+        'class' => [
+          'border',
+          'mb-3',
+          'p-4'
+        ]
+      ]
+    ];
+    $form['cart_information'] = [
+      '#type' => 'html_tag',
+      '#tag' => 'section',
+      "#attributes" => [
+        'id' => $idHtml,
+        'class' => [
+          'border',
+          'mb-3',
+          'p-4'
+        ]
+      ]
+    ];
+    $form['#attached']['library'][] = 'stripebyhabeuk/stripejsinit';
+    // pass and attach datas.
+    $form['#attached']['drupalSettings']['stripebyhabeuk'] = [
+      'publishableKey' => $config['api_key_test'],
+      'idhtml' => $idHtml,
+      'enable_credit_card_logos' => FALSE,
+      'clientSecret' => $paimentIndent['client_secret'],
+      'payment_status' => "requires_payment_method",
+      'return_url' => $request->getScheme() . '://' . $request->getHttpHost() . '/managepackvhsost/afterpay'
+    ];
   }
   
   /**

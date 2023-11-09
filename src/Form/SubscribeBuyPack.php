@@ -9,9 +9,7 @@ use Drupal\managepackvhsost\Services\CheckDomains;
 use Drupal\ovh_api_rest\Services\ManageBuyDomain;
 use Drupal\stripebyhabeuk\Services\PasserelleStripe;
 use Drupal\Component\Utility\NestedArray;
-use Drupal\lesroidelareno\lesroidelareno;
-use Drupal\Component\Utility\Html;
-use Stephane888\Debug\Repositories\ConfigDrupal;
+use Stephane888\Debug\ExceptionDebug;
 
 /**
  * Provides a managepackvhsost form.
@@ -43,8 +41,8 @@ class SubscribeBuyPack extends FormBase {
    * @var array
    */
   protected $type_packs = [
-    'site-pro' => 'Pack standard'
-    // 'site-e-commerce' => 'Site e-Commerce'
+    'site-pro' => 'Pack standard',
+    'site-vip' => 'Pack VIP'
   ];
   
   /**
@@ -80,6 +78,11 @@ class SubscribeBuyPack extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+    // $domain_alias =
+    // \Drupal::entityTypeManager()->getStorage('domain_alias')->loadMultiple();
+    // dump($domain_alias);
+    // dump($domain_alias['chez_yemma_com']->toArray());
+    //
     $form['#attributes']['id'] = $this->getFormId();
     // ### for test price
     // if (!$form_state->has('page_num'))
@@ -103,7 +106,6 @@ class SubscribeBuyPack extends FormBase {
       $class
     ]);
     //
-    
     $this->goToStepeDomain($form, $form_state);
     $this->getFormByStep($form, $form_state);
     $this->actionsButtons($form, $form_state);
@@ -117,6 +119,7 @@ class SubscribeBuyPack extends FormBase {
    */
   protected function getFormByStep(&$form, FormStateInterface $form_state) {
     if ($form_state->has('page_num')) {
+      \Drupal::messenger()->addStatus('page : ' . $form_state->get('page_num'), true);
       switch ($form_state->get('page_num')) {
         case '1':
           $this->formSelectPack($form, $form_state);
@@ -205,48 +208,86 @@ class SubscribeBuyPack extends FormBase {
    * @param FormStateInterface $form_state
    */
   protected function formGetDomainValue(array &$form, FormStateInterface $form_state) {
-    $n = $form_state->get('page_num');
-    $tempValue = $form_state->get([
-      'tempValues',
-      $n
-    ]);
-    $select_type_action = $form_state->getValue('select_type_action');
-    if ($select_type_action == 'new_domain') {
-      $form['domaine'] = [
-        '#type' => 'textfield',
-        '#title' => $this->t(' Saisir un domaine pour votre site web '),
-        // '#required' => TRUE, on doit mettre en place un validateur de domain.
-        '#default_value' => isset($tempValue['domaine']) ? $tempValue['domaine'] : $this->ManageBuyDomain->getDomain(),
-        '#description' => 'Example de domaine : mini-garage.com, blogcuisine.fr ...',
-        '#required' => true
-      ];
-    }
     
-    // $form['domaine_exit'] = [
-    // '#type' => 'checkbox',
-    // '#title' => $this->t(" J'ai déjà mon domaine "),
-    // '#required' => false,
-    // '#default_value' => isset($tempValue['domaine_exit']) ?
-    // $tempValue['domaine_exit'] : false,
-    // '#states' => [
-    // 'visible' => [
-    // ':input[name="use_domaine_exit"]' => [
-    // 'checked' => false
-    // ]
-    // ]
-    // ]
-    // ];
-    elseif ($select_type_action == 'old_domain') {
-      $form['domaine_existing'] = [
-        '#type' => 'textfield',
-        '#title' => $this->t(' Votre domaine '),
-        // '#required' => TRUE, on doit mettre en place un validateur de domain.
-        '#default_value' => isset($tempValue['domaine_existing']) ? $tempValue['domaine_existing'] : '',
-        '#description' => 'Le domaine est deja achété',
-        '#required' => true
+    /**
+     * Si l'utilisateur n'est pas connecté, on le connecté.
+     * Si l'utilisateur n'a pas encore generer de site web, il ne doit pas
+     * pouvoir pousuivre.
+     */
+    if (!\Drupal::currentUser()->id()) {
+      \Drupal::messenger()->addStatus('user not connecter');
+      $form['block_login'] = [
+        '#type' => 'html_tag',
+        '#tag' => 'section',
+        "#attributes" => [
+          'id' => 'appLoginRegister',
+          'class' => [
+            'border',
+            'mb-3',
+            'p-4'
+          ],
+          "action_after_login" => "reload"
+        ],
+        '#value' => 'Veillez vous connecter afin de poursuivre'
       ];
+      $form['#attached']['library'][] = 'login_rx_vuejs/login_register';
+      // $form_state->set('page_num', 2);
     }
-    elseif ($select_type_action == 'sub_domain') {
+    else {
+      $n = $form_state->get('page_num');
+      $tempValue = $form_state->get([
+        'tempValues',
+        $n
+      ]);
+      $select_type_action = $form_state->getValue('select_type_action');
+      if ($select_type_action == 'new_domain') {
+        $form['domaine'] = [
+          '#type' => 'textfield',
+          '#title' => $this->t(' Saisir un domaine pour votre site web '),
+          // '#required' => TRUE, on doit mettre en place un validateur de
+          // domain.
+          '#default_value' => isset($tempValue['domaine']) ? $tempValue['domaine'] : $this->ManageBuyDomain->getDomain(),
+          '#description' => 'Example de domaine : mini-garage.com, blogcuisine.fr ...',
+          '#required' => true
+        ];
+      }
+      // $form['domaine_exit'] = [
+      // '#type' => 'checkbox',
+      // '#title' => $this->t(" J'ai déjà mon domaine "),
+      // '#required' => false,
+      // '#default_value' => isset($tempValue['domaine_exit']) ?
+      // $tempValue['domaine_exit'] : false,
+      // '#states' => [
+      // 'visible' => [
+      // ':input[name="use_domaine_exit"]' => [
+      // 'checked' => false
+      // ]
+      // ]
+      // ]
+      // ];
+      elseif ($select_type_action == 'old_domain') {
+        $form['domaine_existing'] = [
+          '#type' => 'textfield',
+          '#title' => $this->t(' Votre domaine '),
+          // '#required' => TRUE, on doit mettre en place un validateur de
+          // domain.
+          '#default_value' => isset($tempValue['domaine_existing']) ? $tempValue['domaine_existing'] : '',
+          '#description' => 'Le domaine est deja achété',
+          '#required' => true
+        ];
+        $form['domaine_sub_description'] = [
+          '#type' => 'html_tag',
+          '#tag' => 'div',
+          '#value' => "Vous devez ajouter un enregistrement DNS de type A au niveau de votre hebegeur afin que votre domain puisse pointer sur votre site web. ",
+          '#attributes' => [
+            'class' => [
+              'alert',
+              'alert-primary'
+            ]
+          ]
+        ];
+      }
+      //
       $options = [];
       $uid = \Drupal::currentUser()->id();
       $query = \Drupal::entityTypeManager()->getStorage('domain_ovh_entity')->getQuery();
@@ -266,30 +307,13 @@ class SubscribeBuyPack extends FormBase {
       }
       $form['sub_domain'] = [
         '#type' => 'select',
-        '#title' => $this->t(' Votre domaine '),
-        // '#required' => TRUE, on doit mettre en place un validateur de domain.
+        '#title' => $this->t(' Selectionner un site generé '),
+        '#required' => TRUE,
         '#default_value' => isset($tempValue['domaine_existing']) ? $tempValue['domaine_existing'] : '',
-        '#description' => 'Le domaine est deja achété',
+        '#description' => "Selectionner le sous site pour lequel vous souhaitez payer l'abonnement",
         '#options' => $options
       ];
     }
-    
-    $ssdomain = lesroidelareno::getCurrentPrefixDomain() ? str_replace("_", "-", lesroidelareno::getCurrentPrefixDomain()) : '';
-    // $form['use_domaine_exit'] = [
-    // '#type' => 'checkbox',
-    // '#title' => $this->t(" Utiliser le sous domaine "),
-    // '#description' => $ssdomain . '.wb-horizon.com',
-    // '#required' => false,
-    // '#default_value' => isset($tempValue['use_domaine_exit']) ?
-    // $tempValue['use_domaine_exit'] : false,
-    // '#states' => [
-    // 'visible' => [
-    // ':input[name="domaine_exit"]' => [
-    // 'checked' => false
-    // ]
-    // ]
-    // ]
-    // ];
   }
   
   /**
@@ -327,120 +351,22 @@ class SubscribeBuyPack extends FormBase {
    * @param FormStateInterface $form_state
    */
   protected function formPaiement(array &$form, FormStateInterface $form_state) {
+    /**
+     * à ce stade, on fait la sauvegarde des données, On va pousuivre sur une
+     * autre etape.
+     */
+    $domain_search = $form_state->get('domain_search');
+    if (!$domain_search) {
+      throw ExceptionDebug::exception("Une erreur s'est produite");
+    }
     $price = $this->getPrice($form, $form_state);
-    $request = \Drupal::requestStack()->getCurrentRequest();
-    $paimentIndent = $this->PasserelleStripe->paidInvoice($price);
-    $config = ConfigDrupal::config('stripebyhabeuk.settings');
-    $n = $form_state->get('page_num');
-    $tempValue = $form_state->get([
-      'tempValues',
-      $n
-    ]);
-    $this->fieldsPaiement($form, $form_state);
-    //
-    $form['paiement-info'] = [
-      '#type' => 'html_tag',
-      '#tag' => 'div',
-      '#attributes' => [
-        'class' => [
-          'mb-5',
-          'd-flex',
-          'flex-column align-items-center'
-        ]
-      ],
-      
-      [
-        '#type' => 'html_tag',
-        '#tag' => 'h2',
-        '#value' => 'Payer votre commande '
-      ],
-      [
-        '#type' => "html_tag",
-        '#tag' => "strong",
-        '#attributes' => [
-          'class' => [
-            'h4',
-            'font-weight-bold'
-          ]
-        ],
-        "#value" => "Total: " . $price . " €"
-      ]
-    ];
-    $form['paiement-info-img'] = [
-      '#type' => 'html_tag',
-      '#tag' => 'div',
-      '#attributes' => [
-        'class' => [
-          'd-flex',
-          'flex-column align-items-center'
-        ]
-      ],
-      [
-        '#type' => 'html_tag',
-        '#tag' => 'img',
-        '#attributes' => [
-          'src' => '/' . drupal_get_path('module', 'managepackvhsost') . '/img/us-available-brands.e0ae81a0.svg',
-          'class' => [
-            'img-fluid',
-            'mb-4',
-            'd-none'
-          ]
-        ]
-      ]
-    ];
-    $idHtml = Html::getUniqueId('cart-ifs-' . rand(100, 999));
-    $form['titre_cart'] = [
-      '#type' => 'html_tag',
-      '#tag' => 'span',
-      "#attributes" => [
-        'class' => []
-      ],
-      '#value' => t('Enter credit card information')
-    ];
-    $form['stripebyhabeuk_payment_intent_id'] = [
-      '#type' => 'hidden',
-      '#attributes' => [
-        'id' => 'payment-intent-id' . $idHtml
-      ]
-    ];
-    $form['cart_information'] = [
-      '#type' => 'html_tag',
-      '#tag' => 'section',
-      "#attributes" => [
-        'id' => $idHtml,
-        'class' => [
-          'border',
-          'mb-3',
-          'p-4'
-        ]
-      ]
-    ];
-    $form['cart_information'] = [
-      '#type' => 'html_tag',
-      '#tag' => 'section',
-      "#attributes" => [
-        'id' => $idHtml,
-        'class' => [
-          'border',
-          'mb-3',
-          'p-4'
-        ]
-      ]
-    ];
-    $form['#attached']['library'][] = 'stripebyhabeuk/stripejsinit';
-    // pass and attach datas.
-    $form['#attached']['drupalSettings']['stripebyhabeuk'] = [
-      'publishableKey' => $config['api_key_test'],
-      'idhtml' => $idHtml,
-      'enable_credit_card_logos' => FALSE,
-      'clientSecret' => $paimentIndent['client_secret'],
-      'payment_status' => "requires_payment_method",
-      'return_url' => $request->getScheme() . '://' . $request->getHttpHost() . '/managepackvhsost/afterpay'
-    ];
-    //
-    // $form['#attached']['library'][] = 'managepackvhsost/managepackvhsost';
-    // $form['#attached']['drupalSettings']['managepackvhsost']['client_secret']
-    // = $paimentIndent['client_secret'];
+    
+    $titre = "Abonnement";
+    $paimentIndent = $this->PasserelleStripe->paidInvoice($price, $titre);
+    $domain_search->set('client_secret', $paimentIndent['client_secret']);
+    $domain_search->save();
+    
+    $this->fieldsPaiement($form, $form_state, $price, $paimentIndent);
   }
   
   /**
@@ -455,9 +381,9 @@ class SubscribeBuyPack extends FormBase {
      */
     if (!empty($domain) || $domaine_existing) {
       $domaine = strtolower($form_state->getValue('domaine'));
-      $form_state->setValue('domaine', $domaine);
+      $form_state->set('domaine', $domaine);
       $oldDomain = strtolower($form_state->getValue('domaine_existing'));
-      $form_state->setValue('domaine_existing', $oldDomain);
+      $form_state->set('domaine_existing', $oldDomain);
       $oldExit = $form_state->getValue('domaine_exit');
       // si le domaine exite deja.
       if ($oldExit) {
@@ -501,6 +427,79 @@ class SubscribeBuyPack extends FormBase {
             $form_state->setErrorByName('domaine', $e->getMessage());
           }
         }
+      }
+    }
+    /**
+     * On valide le choix du site generer.
+     */
+    if (isset($form['sub_domain'])) {
+      $domaineId = $form_state->getValue('sub_domain');
+      $domaine = $form_state->get('domaine');
+      $oldDomain = $form_state->get('domaine_existing');
+      if ($domaineId) {
+        $query = \Drupal::entityTypeManager()->getStorage('domain_search')->getQuery();
+        $query->accessCheck(TRUE);
+        $query->condition('status', true);
+        $or = $query->orConditionGroup();
+        $or->condition('domain_external', $domaine);
+        $or->condition('domain_external', $oldDomain);
+        $query->condition($or);
+        $ids = $query->execute();
+        if ($ids) {
+          if ($domaine)
+            $form_state->setErrorByName('domaine', ' Ce domaine "' . $domaine . '" a deja été enregistré ');
+          elseif ($oldDomain)
+            $form_state->setErrorByName('sub_domain', ' Ce domaine "' . $oldDomain . '" a deja été enregistré ');
+        }
+        else {
+          $domain_search = $form_state->get('domain_search');
+          if (!$domain_search) {
+            $uid = \Drupal::currentUser()->id();
+            /**
+             * Il est egalement possible ques les données soit deja enregidtrer
+             * comme brouillons.
+             */
+            $query = \Drupal::entityTypeManager()->getStorage('domain_search')->getQuery();
+            $query->accessCheck(TRUE);
+            $query->condition('status', false);
+            $query->condition('domain_id_drupal', $domaineId);
+            $query->condition('user_id', $uid);
+            $ids = $query->execute();
+            if ($ids) {
+              $id = reset($ids);
+              $domain_search = \Drupal::entityTypeManager()->getStorage('domain_search')->load($id);
+              $domain_search->set('domain_external', $domaine ? $domaine : $oldDomain);
+            }
+            else {
+              $values = [
+                'domain_id_drupal' => $domaineId,
+                'domain_external' => $domaine ? $domaine : $oldDomain,
+                'name' => $domaineId,
+                'status' => FALSE,
+                'is_paid' => FALSE
+              ];
+              $domain_search = \Drupal::entityTypeManager()->getStorage('domain_search')->create($values);
+            }
+            $form_state->set('domain_search', $domain_search);
+          }
+          else {
+            $domain_search->set('domain_id_drupal', $domaineId);
+            $domain_search->set('domain_external', $domaine ? $domaine : $oldDomain);
+            $domain_search->set('name', $domaineId);
+            $form_state->set('domain_search', $domain_search);
+          }
+        }
+      }
+    }
+    /**
+     * On ajoute le cycle de facturation.
+     */
+    if (isset($form['periode'])) {
+      $periode = $form_state->getValue('periode');
+      $domain_search = $form_state->get('domain_search');
+      if ($domain_search) {
+        $domain_search->set('cycle_facturation', $periode);
+        $form_state->set('domain_search', $domain_search);
       }
     }
   }
