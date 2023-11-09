@@ -78,16 +78,7 @@ class SubscribeBuyPack extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    // $domain_alias =
-    // \Drupal::entityTypeManager()->getStorage('domain_alias')->loadMultiple();
-    // dump($domain_alias);
-    // dump($domain_alias['chez_yemma_com']->toArray());
-    //
     $form['#attributes']['id'] = $this->getFormId();
-    // ### for test price
-    // if (!$form_state->has('page_num'))
-    // $form_state->set('page_num', 5);
-    // ### for test price
     if ((!$form_state->has('page_num') || $form_state->get('page_num') == 1) && empty($_GET['type_pack'])) {
       $class = [
         "padding-bottom"
