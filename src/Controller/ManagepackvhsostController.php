@@ -87,6 +87,7 @@ class ManagepackvhsostController extends ControllerBase {
       // On genere le fichier host si necessaire.
       $domain_external = $domain_search->get('domain_external')->value;
       if ($domain_external) {
+        $this->messenger()->addStatus("Votre domaine nouveau domaine est accessible et serra disponible dans environ 10 minutes.");
         $id = \preg_replace('/[^a-z0-9_]+/', "_", $domain_external);
         $this->GenerateDomainVhost->createDomainOnVPS($domain_external);
         // On ajoute l'alias.
@@ -104,6 +105,7 @@ class ManagepackvhsostController extends ControllerBase {
           $domainAlias->save();
         }
       }
+      // on redirige l'utilisateur vers sa page.
     }
     else {
       $this->messenger()->addError("Une erreur s'est produite");
