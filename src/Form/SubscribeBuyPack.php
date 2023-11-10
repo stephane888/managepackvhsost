@@ -78,6 +78,8 @@ class SubscribeBuyPack extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+    
+    //
     $form['#attributes']['id'] = $this->getFormId();
     if ((!$form_state->has('page_num') || $form_state->get('page_num') == 1) && empty($_GET['type_pack'])) {
       $class = [
@@ -101,6 +103,28 @@ class SubscribeBuyPack extends FormBase {
     $this->getFormByStep($form, $form_state);
     $this->actionsButtons($form, $form_state);
     return $form;
+  }
+  
+  /**
+   *
+   * @deprecated remove it.
+   * @param unknown $currentDomain
+   */
+  protected function testfile($currentDomain) {
+    $ip = "192.168.8.8";
+    $hosts = file('/siteweb/hosts_file', FILE_SKIP_EMPTY_LINES);
+    foreach ($hosts as $k => $line_host) {
+      if (empty($line_host))
+        unset($hosts[$k]);
+      elseif (str_contains($line_host, $currentDomain)) {
+        unset($hosts[$k]);
+      }
+    }
+    $hosts[] = $ip . "\t" . $currentDomain . "";
+    $hosts_file = implode("", $hosts);
+    $cmd = "echo '$hosts_file' > /siteweb/hosts_file";
+    $exc2 = $this->excuteCmd($cmd);
+    dump($exc2);
   }
   
   /**

@@ -342,4 +342,20 @@ trait SubscribeBuyPackSteps {
     }
   }
   
+  private function excuteCmd($cmd) {
+    ob_start();
+    $return_var = '';
+    $output = '';
+    exec($cmd . " 2>&1", $output, $return_var);
+    $result = ob_get_contents();
+    ob_end_clean();
+    $debug = [
+      'output' => $output,
+      'return_var' => $return_var,
+      'result' => $result,
+      'script' => $cmd
+    ];
+    return $debug;
+  }
+  
 }

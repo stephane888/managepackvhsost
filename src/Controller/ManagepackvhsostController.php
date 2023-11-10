@@ -90,8 +90,7 @@ class ManagepackvhsostController extends ControllerBase {
         $this->messenger()->addStatus(" Votre domaine nouveau domaine a été parfaitement configurer et serra disponible dans environ 10 minutes. ");
         $id = \preg_replace('/[^a-z0-9_]+/', "_", $domain_external);
         // genere le nouveau certificat.
-        $this->GenerateDomainVhost->generateSSLForDomain($domain_external);
-        $this->GenerateDomainVhost->createDomainOnVPS($domain_external);
+        $this->GenerateDomainVhost->generateSSLForDomainAndCreatedomainOnVps($domain_external);
         // On ajoute l'alias.
         $domainAlias = $this->entityTypeManager()->getStorage('domain_alias')->load($id);
         if (!$domainAlias) {
