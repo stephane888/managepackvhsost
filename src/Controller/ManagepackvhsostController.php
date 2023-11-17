@@ -105,6 +105,12 @@ class ManagepackvhsostController extends ControllerBase {
           $domainAlias = \Drupal\domain_alias\Entity\DomainAlias::create($values);
           $domainAlias->save();
         }
+        else {
+          $domainAlias->set('label', $domain_external);
+          $domainAlias->set('pattern', $domain_external);
+          $domainAlias->set('domain_id', $domain_search->get('domain_id_drupal')->target_id);
+          $domainAlias->save();
+        }
       }
       // on redirige l'utilisateur vers sa page.
       return $this->redirect('user.page');
