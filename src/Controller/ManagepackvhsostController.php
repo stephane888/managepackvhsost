@@ -118,8 +118,9 @@ class ManagepackvhsostController extends ControllerBase {
           $domainAlias->set('pattern', $domain_external);
           $domainAlias->set('domain_id', $domain_search->get('domain_id_drupal')->target_id);
           $domainAlias->save();
+          drupal_flush_all_caches();
           //
-          $this->CacheRender->invalidateAll();
+          // $this->CacheRender->invalidateAll();
         }
       }
       // on redirige l'utilisateur vers sa page.
