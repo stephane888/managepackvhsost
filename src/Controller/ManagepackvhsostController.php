@@ -119,21 +119,29 @@ class ManagepackvhsostController extends ControllerBase {
           $domainAlias->set('domain_id', $domain_search->get('domain_id_drupal')->target_id);
           $domainAlias->save();
           $this->messenger()->addStatus('Cache clear');
-          // drupal_flush_all_caches();
-          $this->CacheRender->invalidateAll();
-          //
-          /**
-           *
-           * @var \Drupal\Core\Cache\CacheBackendInterface $CacheEntry
-           */
-          $CacheEntry = \Drupal::service('cache.entity');
-          $CacheEntry->invalidateAll();
-          /**
-           *
-           * @var \Drupal\Core\Cache\CacheBackendInterface $Cachestatic
-           */
-          $Cachestatic = \Drupal::service('cache.static');
-          $Cachestatic->invalidateAll();
+          drupal_flush_all_caches();
+          // $this->CacheRender->invalidateAll();
+          // //
+          // /**
+          // *
+          // * @var \Drupal\Core\Cache\CacheBackendInterface $CacheEntry
+          // */
+          // $CacheEntry = \Drupal::service('cache.entity');
+          // $CacheEntry->invalidateAll();
+          // /**
+          // *
+          // * @var \Drupal\Core\Cache\CacheBackendInterface $Cachestatic
+          // */
+          // $Cachestatic = \Drupal::service('cache.static');
+          // $Cachestatic->invalidateAll();
+          // /**
+          // *
+          // * @var \Drupal\Core\PageCache\ResponsePolicy\KillSwitch
+          // $page_cache_kill_switch
+          // */
+          // $page_cache_kill_switch =
+          // \Drupal::service('page_cache_kill_switch');
+          // $page_cache_kill_switch->trigger();
         }
       }
       // on redirige l'utilisateur vers sa page.
