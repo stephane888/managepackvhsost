@@ -10,6 +10,7 @@ use Drupal\ovh_api_rest\Services\ManageBuyDomain;
 use Drupal\stripebyhabeuk\Services\PasserelleStripe;
 use Drupal\Component\Utility\NestedArray;
 use Stephane888\Debug\ExceptionDebug;
+use Drupal\lesroidelareno\lesroidelareno;
 
 /**
  * Provides a managepackvhsost form.
@@ -78,6 +79,7 @@ class SubscribeBuyPack extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+    // dump(gethostbyname('tonsiteweb.fr'));
     
     //
     $form['#attributes']['id'] = $this->getFormId();
@@ -108,7 +110,7 @@ class SubscribeBuyPack extends FormBase {
   /**
    *
    * @deprecated remove it.
-   * @param unknown $currentDomain
+   * @param string $currentDomain
    */
   protected function testfile($currentDomain) {
     $ip = "192.168.8.8";
@@ -285,19 +287,25 @@ class SubscribeBuyPack extends FormBase {
           // '#required' => TRUE, on doit mettre en place un validateur de
           // domain.
           '#default_value' => isset($tempValue['domaine_existing']) ? $tempValue['domaine_existing'] : '',
-          '#description' => 'Le domaine est deja achété',
+          '#description' => 'Le domaine est deja achété, <br> example : mondomaine.com <br> example : bien-heureux.fr ...',
           '#required' => true
         ];
         $form['domaine_sub_description'] = [
           '#type' => 'html_tag',
           '#tag' => 'div',
-          '#value' => "Vous devez ajouter un enregistrement DNS de type A au niveau de votre hebegeur afin que votre domain puisse pointer sur votre site web. ",
+          '#value' => "Vous devez ajouter un enregistrement DNS de type A avec pour IP 152.228.134.19 au niveau de votre hebegeur afin que votre domain puisse pointer sur votre site web. vous devez egalment le faire pour le sous domaine www ",
           '#attributes' => [
             'class' => [
               'alert',
-              'alert-primary'
+              'alert-warning'
             ]
           ]
+        ];
+        $form['config_dns'] = [
+          '#type' => 'checkbox',
+          '#title' => "Je confirme que le domaine m'appartient et j'ai deja effectué les modifications necessaire concernant l'enregitrement de DNS.",
+          '#required' => TRUE,
+          '#default_value' => isset($tempValue['config_dns']) ? $tempValue['config_dns'] : ''
         ];
       }
       //
@@ -322,7 +330,7 @@ class SubscribeBuyPack extends FormBase {
         '#type' => 'select',
         '#title' => $this->t(' Selectionner un site generé '),
         '#required' => TRUE,
-        '#default_value' => isset($tempValue['domaine_existing']) ? $tempValue['domaine_existing'] : '',
+        '#default_value' => isset($tempValue['sub_domain']) ? $tempValue['sub_domain'] : '',
         '#description' => "Selectionner le sous site pour lequel vous souhaitez payer l'abonnement",
         '#options' => $options
       ];
@@ -442,6 +450,18 @@ class SubscribeBuyPack extends FormBase {
           }
         }
       }
+    }
+    /**
+     * On verifie si le domaine est disponible.
+     */
+    if (isset($form['domaine_existing'])) {
+      $oldDomain = $form_state->get('domaine_existing');
+      if (empty($oldDomain))
+        $form_state->setErrorByName('domaine_existing', "Le domaine est requis");
+      if (lesroidelareno::ip_serveur !== gethostbyname($oldDomain))
+        $form_state->setErrorByName('domaine_existing', "Vous devez configurer un enregitrement pour le domaine et le sous domaine www");
+      if (lesroidelareno::ip_serveur !== gethostbyname('www.' . $oldDomain))
+        $form_state->setErrorByName('domaine_existing', "Vous devez configurer un enregitrement pour le sous domaine www");
     }
     /**
      * On valide le choix du site generer.
