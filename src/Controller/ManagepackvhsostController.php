@@ -13,6 +13,7 @@ use Drupal\generate_domain_vps\Services\GenerateDomainVhost;
 use Drupal\stripebyhabeuk\Services\PasserelleStripe;
 use Stephane888\Debug\Repositories\ConfigDrupal;
 use Drupal\commerce_price\Price;
+use Drupal\Core\Cache\CacheBackendInterface;
 
 /**
  * Returns responses for managepackvhsost routes.
@@ -32,9 +33,16 @@ class ManagepackvhsostController extends ControllerBase {
    */
   protected $PasserelleStripe;
   
-  function __construct(GenerateDomainVhost $GenerateDomainVhost, PasserelleStripe $PasserelleStripe) {
+  /**
+   *
+   * @var \Drupal\Core\Cache\CacheBackendInterface
+   */
+  protected $CacheRender;
+  
+  function __construct(GenerateDomainVhost $GenerateDomainVhost, PasserelleStripe $PasserelleStripe, CacheBackendInterface $CacheRender) {
     $this->GenerateDomainVhost = $GenerateDomainVhost;
     $this->PasserelleStripe = $PasserelleStripe;
+    $this->CacheRender = $CacheRender;
   }
   
   /**
@@ -42,7 +50,7 @@ class ManagepackvhsostController extends ControllerBase {
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
-    return new static($container->get('generate_domain_vps.vhosts'), $container->get('stripebyhabeuk.manage'));
+    return new static($container->get('generate_domain_vps.vhosts'), $container->get('stripebyhabeuk.manage'), $container->get('cache.render'));
   }
   
   /**
@@ -110,6 +118,8 @@ class ManagepackvhsostController extends ControllerBase {
           $domainAlias->set('pattern', $domain_external);
           $domainAlias->set('domain_id', $domain_search->get('domain_id_drupal')->target_id);
           $domainAlias->save();
+          //
+          $this->CacheRender->invalidateAll();
         }
       }
       // on redirige l'utilisateur vers sa page.
