@@ -369,6 +369,7 @@ trait SubscribeBuyPackSteps {
           }
       }
     }
+    
     return $status;
   }
   

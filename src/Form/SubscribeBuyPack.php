@@ -10,7 +10,8 @@ use Drupal\ovh_api_rest\Services\ManageBuyDomain;
 use Drupal\stripebyhabeuk\Services\PasserelleStripe;
 use Drupal\Component\Utility\NestedArray;
 use Stephane888\Debug\ExceptionDebug;
-use Drupal\lesroidelareno\lesroidelareno;
+
+// use Drupal\lesroidelareno\lesroidelareno;
 
 /**
  * Provides a managepackvhsost form.
@@ -80,7 +81,7 @@ class SubscribeBuyPack extends FormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     // dump(gethostbyname('tonsiteweb.fr'));
-    // dump(dns_get_record('tonsiteweb.fr'));
+    // dump(dns_get_record('www.tonsiteweb.fr'));
     
     //
     $form['#attributes']['id'] = $this->getFormId();
