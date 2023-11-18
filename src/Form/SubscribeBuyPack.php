@@ -80,6 +80,7 @@ class SubscribeBuyPack extends FormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     // dump(gethostbyname('tonsiteweb.fr'));
+    // dump(dns_get_record('tonsiteweb.fr'));
     
     //
     $form['#attributes']['id'] = $this->getFormId();
@@ -458,9 +459,9 @@ class SubscribeBuyPack extends FormBase {
       $oldDomain = $form_state->get('domaine_existing');
       if (empty($oldDomain))
         $form_state->setErrorByName('domaine_existing', "Le domaine est requis");
-      if (lesroidelareno::ip_serveur !== gethostbyname($oldDomain))
+      if (!$this->validconfigDomain($oldDomain))
         $form_state->setErrorByName('domaine_existing', "Vous devez configurer un enregitrement pour le domaine et le sous domaine www");
-      if (lesroidelareno::ip_serveur !== gethostbyname('www.' . $oldDomain))
+      if (!$this->validconfigDomain('www.' . $oldDomain))
         $form_state->setErrorByName('domaine_existing', "Vous devez configurer un enregitrement pour le sous domaine www");
     }
     /**

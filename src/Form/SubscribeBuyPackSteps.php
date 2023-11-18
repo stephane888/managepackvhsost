@@ -6,6 +6,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Stephane888\Debug\ExceptionDebug;
 use Drupal\Component\Utility\Html;
 use Stephane888\Debug\Repositories\ConfigDrupal;
+use Drupal\lesroidelareno\lesroidelareno;
 
 /**
  * Provides a managepackvhsost form.
@@ -340,6 +341,35 @@ trait SubscribeBuyPackSteps {
         ]
       ];
     }
+  }
+  
+  /**
+   * Permet de valider la configuration du domaine.
+   *
+   * @param string $domain
+   */
+  protected function validconfigDomain($domain) {
+    $status = false;
+    $dnsConfigs = dns_get_record($domain);
+    foreach ($dnsConfigs as $dnsConfig) {
+      if (!empty($dnsConfig['type'])) {
+        if ($dnsConfig['type'] == 'A')
+          if ($dnsConfig['ip'] == lesroidelareno::ip_serveur)
+            $status = true;
+          else {
+            $status = false;
+            break;
+          }
+        elseif ($dnsConfig['type'] == 'AAAA')
+          if ($dnsConfig['ipv6'] == lesroidelareno::ipv6_serveur)
+            $status = true;
+          else {
+            $status = false;
+            break;
+          }
+      }
+    }
+    return $status;
   }
   
   private function excuteCmd($cmd) {
