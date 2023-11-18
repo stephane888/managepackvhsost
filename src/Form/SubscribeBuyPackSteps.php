@@ -350,13 +350,14 @@ trait SubscribeBuyPackSteps {
    */
   protected function validconfigDomain($domain) {
     $status = false;
-    $dnsConfigs = dns_get_record($domain);
+    $dnsConfigs = dns_get_record($domain, DNS_A | DNS_AAAA);
     foreach ($dnsConfigs as $dnsConfig) {
       if (!empty($dnsConfig['type'])) {
         if ($dnsConfig['type'] == 'A')
           if ($dnsConfig['ip'] == lesroidelareno::ip_serveur)
             $status = true;
           else {
+            $this->messenger()->addWarning("L'@ip " . $dnsConfig['ip'] . " n'est pas valide ");
             $status = false;
             break;
           }
@@ -364,12 +365,12 @@ trait SubscribeBuyPackSteps {
           if ($dnsConfig['ipv6'] == lesroidelareno::ipv6_serveur)
             $status = true;
           else {
+            $this->messenger()->addWarning("L'@ipv6 " . $dnsConfig['ipv6'] . " n'est pas valide ");
             $status = false;
             break;
           }
       }
     }
-    
     return $status;
   }
   

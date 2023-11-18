@@ -81,7 +81,7 @@ class SubscribeBuyPack extends FormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     // dump(gethostbyname('tonsiteweb.fr'));
-    // dump(dns_get_record('www.tonsiteweb.fr'));
+    // dump(dns_get_record('www.tonsiteweb.fr', DNS_A | DNS_AAAA));
     
     //
     $form['#attributes']['id'] = $this->getFormId();
