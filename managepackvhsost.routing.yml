@@ -38,3 +38,16 @@ entity.domain_alias.collection:
     _title: 'Domain alias'
   requirements:
     _permission: 'administer managepackvhsost configuration'
+
+managepackvhsost.domain_alias.collection:
+  path: '/admin/managepackvhsost/domain_alias'
+  defaults:
+    _title: 'domain_alias'
+    _controller: '\Drupal\managepackvhsost\Controller\ManagepackvhsostController::domain_aliasCollection'
+  requirements:
+    _permission: 'administer managepackvhsost configuration'
+
+    
+
+
+

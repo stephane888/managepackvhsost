@@ -14,6 +14,7 @@ use Drupal\stripebyhabeuk\Services\PasserelleStripe;
 use Stephane888\Debug\Repositories\ConfigDrupal;
 use Drupal\commerce_price\Price;
 use Drupal\Core\Cache\CacheBackendInterface;
+use Drupal\Core\Url;
 
 /**
  * Returns responses for managepackvhsost routes.
@@ -172,6 +173,74 @@ class ManagepackvhsostController extends ControllerBase {
       $search
     ];
     return $this->reponse($configs);
+  }
+  
+  public function domain_aliasCollection() {
+    $build = [];
+    $query = $this->entityTypeManager()->getStorage('domain_alias')->getQuery();
+    $query->accessCheck(TRUE);
+    $query->sort('domain_id');
+    $query->pager(50);
+    $ids = $query->execute();
+    $header = [
+      'id' => '#id',
+      'name' => 'Titre',
+      'redirect' => 'redirect',
+      'environment' => 'environment',
+      'pattern' => 'pattern',
+      'domain_id' => 'domain_id'
+    ];
+    $rows = [];
+    if ($ids) {
+      $entities = $this->entityTypeManager()->getStorage('domain_alias')->loadMultiple($ids);
+      foreach ($entities as $entity) {
+        /**
+         *
+         * @var \Drupal\domain_alias\Entity\DomainAlias $entity
+         */
+        $id = $entity->id();
+        $rows[$id] = [
+          'id' => $id,
+          'name' => $entity->hasLinkTemplate('canonical') ? [
+            'data' => [
+              '#type' => 'link',
+              '#title' => $entity->label(),
+              '#weight' => 10,
+              '#url' => $entity->toUrl('canonical')
+            ]
+          ] : $entity->label(),
+          'redirect' => $entity->getRedirect(),
+          'environment' => $entity->getEnvironment(),
+          'pattern' => $entity->getPattern(),
+          'domain_id' => [
+            'data' => [
+              '#type' => 'link',
+              '#title' => $entity->getDomainId(),
+              '#weight' => 10,
+              '#url' => Url::fromRoute('entity.domain.edit_form', [
+                'domain' => $entity->getDomainId()
+              ])
+            ]
+          ]
+        ];
+      }
+    }
+    $build['table'] = [
+      '#type' => 'table',
+      '#header' => $header,
+      '#title' => 'Titre de la table',
+      '#rows' => $rows,
+      '#empty' => 'Aucun contenu',
+      '#attributes' => [
+        'class' => [
+          'page-content00'
+        ]
+      ]
+    ];
+    $build['pager'] = [
+      '#type' => 'pager'
+    ];
+    return $build;
   }
   
   /**
