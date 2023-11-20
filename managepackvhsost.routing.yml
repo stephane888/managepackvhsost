@@ -29,3 +29,12 @@ managepackvhsost.subscribe_buy_pack:
     _form: 'Drupal\managepackvhsost\Form\SubscribeBuyPack'
   requirements:
     _permission: 'access content'
+
+#    
+entity.domain_alias.collection:
+  path: '/admin/domain_alias'
+  defaults:
+    _entity_list: 'domain_alias'
+    _title: 'Domain alias'
+  requirements:
+    _permission: 'administer managepackvhsost configuration'
