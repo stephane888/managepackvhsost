@@ -188,7 +188,8 @@ class ManagepackvhsostController extends ControllerBase {
       'redirect' => 'redirect',
       'environment' => 'environment',
       'pattern' => 'pattern',
-      'domain_id' => 'domain_id'
+      'domain_id' => 'domain_id',
+      'operations' => 'operations'
     ];
     $rows = [];
     if ($ids) {
@@ -221,6 +222,9 @@ class ManagepackvhsostController extends ControllerBase {
                 'domain' => $entity->getDomainId()
               ])
             ]
+          ],
+          'operations' => [
+            'data' => $this->buildOperations($entity)
           ]
         ];
       }
@@ -241,6 +245,48 @@ class ManagepackvhsostController extends ControllerBase {
       '#type' => 'pager'
     ];
     return $build;
+  }
+  
+  /**
+   * Builds a renderable list of operation links for the entity.
+   *
+   * @param \Drupal\Core\Entity\EntityInterface $entity
+   *        The entity on which the linked operations will be performed.
+   *        
+   * @return array A renderable array of operation links.
+   *        
+   * @see \Drupal\Core\Entity\EntityListBuilder::buildRow()
+   */
+  public function buildOperations($entity) {
+    $build = [
+      '#type' => 'operations',
+      '#links' => $this->getOperations($entity)
+    ];
+    
+    return $build;
+  }
+  
+  /**
+   *
+   * {@inheritdoc}
+   */
+  public function getOperations($entity) {
+    $operations = [];
+    if ($entity->access('update') && $entity->hasLinkTemplate('edit-form')) {
+      $operations['edit'] = [
+        'title' => $this->t('Edit'),
+        'weight' => 10,
+        'url' => $entity->toUrl('edit-form')
+      ];
+    }
+    if ($entity->access('delete') && $entity->hasLinkTemplate('delete-form')) {
+      $operations['delete'] = [
+        'title' => $this->t('Delete'),
+        'weight' => 100,
+        'url' => $entity->toUrl('delete-form')
+      ];
+    }
+    return $operations;
   }
   
   /**
