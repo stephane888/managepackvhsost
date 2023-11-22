@@ -43,8 +43,8 @@ class SubscribeBuyPack extends FormBase {
    * @var array
    */
   protected $type_packs = [
-    'site-pro' => 'Pack standard',
-    'site-vip' => 'Pack VIP'
+    'site-pro' => 'Pack BRONZE',
+    'site-vip' => 'Pack GOLD'
   ];
   
   /**
@@ -295,7 +295,8 @@ class SubscribeBuyPack extends FormBase {
         $form['domaine_sub_description'] = [
           '#type' => 'html_tag',
           '#tag' => 'div',
-          '#value' => "Vous devez ajouter un enregistrement DNS de type A avec pour IP 152.228.134.19 au niveau de votre hebegeur afin que votre domain puisse pointer sur votre site web. vous devez egalment le faire pour le sous domaine www ",
+          '#value' => "Vous devez ajouter un enregistrement DNS de type A avec pour IP 152.228.134.19 au niveau de votre hebegeur 
+afin que votre domain puisse pointer sur votre site web. vous devez egalment le faire pour le sous domaine www . Vous devez supprimer les enregistrement en AAAA pour ivp6",
           '#attributes' => [
             'class' => [
               'alert',
