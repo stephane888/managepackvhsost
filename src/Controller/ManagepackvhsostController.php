@@ -127,8 +127,11 @@ class ManagepackvhsostController extends ControllerBase {
           $subject = "Souscription à un abonnement";
           $message = "
 Bonjour $name,
+<p>
 Nous vous remercions pour votre souscription.
+</p>
 
+<br>
 Cordialement l'equiepe wb-horizon
 ";
           $this->sendMails($to, $subject, $message);
