@@ -15,6 +15,8 @@ use Stephane888\Debug\Repositories\ConfigDrupal;
 use Drupal\commerce_price\Price;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Url;
+use Symfony\Component\Mime\Header\MailboxHeader;
+use Symfony\Component\Mime\Address;
 
 /**
  * Returns responses for managepackvhsost routes.
@@ -119,7 +121,17 @@ class ManagepackvhsostController extends ControllerBase {
           $domainAlias->set('pattern', $domain_external);
           $domainAlias->set('domain_id', $domain_search->get('domain_id_drupal')->target_id);
           $domainAlias->save();
-          $this->messenger()->addStatus('Cache clear');
+          // envoit de mail :
+          $to = \Drupal::currentUser()->getEmail();
+          $name = \Drupal::currentUser()->getAccountName();
+          $subject = "Souscription à un abonnement";
+          $message = "
+Bonjour $name,
+Nous vous remercions pour votre souscription.
+
+Cordialement l'equiepe wb-horizon
+";
+          $this->sendMails($to, $subject, $message);
           drupal_flush_all_caches();
           // $this->CacheRender->invalidateAll();
           // //
@@ -145,6 +157,7 @@ class ManagepackvhsostController extends ControllerBase {
           // $page_cache_kill_switch->trigger();
         }
       }
+      
       // on redirige l'utilisateur vers sa page.
       return $this->redirect('user.page');
     }
@@ -304,6 +317,50 @@ class ManagepackvhsostController extends ControllerBase {
       $reponse->setStatusCode($code, $message);
     $reponse->setContent($configs);
     return $reponse;
+  }
+  
+  protected function sendMails(string $to, string $subject, $message, $from = null) {
+    $siteInfo = ConfigDrupal::config('system.site');
+    $mailSystem = ConfigDrupal::config('mailsystem.settings');
+    if (!$from) {
+      $from = $siteInfo['mail'];
+    }
+    $key = 'booking_system_mail';
+    $datas = [
+      'id' => $key,
+      'to' => $to,
+      'subject' => $subject,
+      'body' => $message,
+      'headers' => [
+        'From' => $from,
+        'Sender' => $from,
+        'Return-Path' => $from
+      ]
+    ];
+    /**
+     * On initialise le chargeur de plugin de mail.
+     *
+     * @var \Drupal\Core\Mail\MailManager $PluginMailManger
+     */
+    $PluginMailManger = \Drupal::service('plugin.manager.mail');
+    
+    /**
+     * On recupere l'instance à partir de l'id du plugin.
+     *
+     * @var \Drupal\Core\Mail\MailInterface $mailPlugin
+     */
+    $mailPlugin = $PluginMailManger->createInstance($mailSystem['defaults']['sender']);
+    
+    $mailbox = new MailboxHeader('From', new Address($siteInfo['mail'], $siteInfo['name']));
+    $datas['headers']['From'] = $mailbox->getBodyAsString();
+    $message = $mailPlugin->format($datas);
+    $result = $mailPlugin->mail($message);
+    if (!$result) {
+      $message = t(' There was a problem sending your email notification to @email. ', array(
+        '@email' => $to
+      ));
+      $this->getLogger('managepackvhsost')->alert($message);
+    }
   }
   
 }

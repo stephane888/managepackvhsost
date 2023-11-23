@@ -8,6 +8,10 @@ managepackvhsost:
   dependencies:
     - core/drupalSettings
     - managepackvhsost/jquery-labelauty
+    
+select_pack:
+  js:
+    js/select_pack.js: {}
 
 # Third-party library (self hosted).
 jquery-labelauty:

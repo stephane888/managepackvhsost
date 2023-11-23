@@ -111,28 +111,6 @@ class SubscribeBuyPack extends FormBase {
   
   /**
    *
-   * @deprecated remove it.
-   * @param string $currentDomain
-   */
-  protected function testfile($currentDomain) {
-    $ip = "192.168.8.8";
-    $hosts = file('/siteweb/hosts_file', FILE_SKIP_EMPTY_LINES);
-    foreach ($hosts as $k => $line_host) {
-      if (empty($line_host))
-        unset($hosts[$k]);
-      elseif (str_contains($line_host, $currentDomain)) {
-        unset($hosts[$k]);
-      }
-    }
-    $hosts[] = $ip . "\t" . $currentDomain . "";
-    $hosts_file = implode("", $hosts);
-    $cmd = "echo '$hosts_file' > /siteweb/hosts_file";
-    $exc2 = $this->excuteCmd($cmd);
-    dump($exc2);
-  }
-  
-  /**
-   *
    * @param array $form
    * @param FormStateInterface $form_state
    */
@@ -185,12 +163,14 @@ class SubscribeBuyPack extends FormBase {
       '#required' => TRUE,
       '#default_value' => isset($tempValue['type_pack']) ? $tempValue['type_pack'] : 'site-pro',
       '#attributes' => [
+        'id' => 'managepackvhsost__type_pack',
         'class' => [
           'd-none'
         ]
       ],
       '#options' => $this->type_packs
     ];
+    $form['#attached']['library'][] = 'managepackvhsost/select_pack';
   }
   
   /**
