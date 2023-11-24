@@ -10,6 +10,7 @@ use Drupal\ovh_api_rest\Services\ManageBuyDomain;
 use Drupal\stripebyhabeuk\Services\PasserelleStripe;
 use Drupal\Component\Utility\NestedArray;
 use Stephane888\Debug\ExceptionDebug;
+use Drupal\ovh_api_rest\Services\ManageDnsZone;
 
 // use Drupal\lesroidelareno\lesroidelareno;
 
@@ -53,10 +54,11 @@ class SubscribeBuyPack extends FormBase {
    * @param ManageBuyDomain $ManageBuyDomain
    * @param PasserelleStripe $PasserelleStripe
    */
-  function __construct(CheckDomains $CheckDomains, ManageBuyDomain $ManageBuyDomain, PasserelleStripe $PasserelleStripe) {
+  function __construct(CheckDomains $CheckDomains, ManageBuyDomain $ManageBuyDomain, PasserelleStripe $PasserelleStripe, ManageDnsZone $ManageDnsZone) {
     $this->CheckDomains = $CheckDomains;
     $this->ManageBuyDomain = $ManageBuyDomain;
     $this->PasserelleStripe = $PasserelleStripe;
+    $this->ManageDnsZone = $ManageDnsZone;
   }
   
   /**
@@ -64,7 +66,7 @@ class SubscribeBuyPack extends FormBase {
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
-    return new static($container->get('managepackvhsost.search_domain'), $container->get('ovh_api_rest.manage_buy_domain'), $container->get('stripebyhabeuk.manage'));
+    return new static($container->get('managepackvhsost.search_domain'), $container->get('ovh_api_rest.manage_buy_domain'), $container->get('stripebyhabeuk.manage'), $container->get('ovh_api_rest.manage_dns_zone'));
   }
   
   /**
@@ -241,8 +243,6 @@ class SubscribeBuyPack extends FormBase {
         $form['domaine'] = [
           '#type' => 'textfield',
           '#title' => $this->t(' Saisir un domaine pour votre site web '),
-          // '#required' => TRUE, on doit mettre en place un validateur de
-          // domain.
           '#default_value' => isset($tempValue['domaine']) ? $tempValue['domaine'] : $this->ManageBuyDomain->getDomain(),
           '#description' => 'Example de domaine : mini-garage.com, blogcuisine.fr ...',
           '#required' => true
@@ -368,6 +368,14 @@ afin que votre domain puisse pointer sur votre site web. vous devez egalment le 
     $titre = "Abonnement";
     $paimentIndent = $this->PasserelleStripe->paidInvoice($price, $titre);
     $domain_search->set('client_secret', $paimentIndent['client_secret']);
+    //
+    $tempValue = $form_state->get('tempValues');
+    
+    foreach ($tempValue as $value) {
+      if (!empty($value['type_pack'])) {
+        $domain_search->set('abonnement', $value['type_pack']);
+      }
+    }
     $domain_search->save();
     
     $this->fieldsPaiement($form, $form_state, $price, $paimentIndent);
@@ -378,14 +386,23 @@ afin que votre domain puisse pointer sur votre site web. vous devez egalment le 
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
-    // dump($form);
+    $submit = $form_state->getTriggeringElement();
+    if (!empty($submit['#name']) && $submit['#name'] == 'precedant') {
+      return $form;
+    }
+    //
+    //
     $domain = $form_state->getValue('domaine');
     $domaine_existing = $form_state->getValue('domaine_existing');
     /**
-     * Validation du domaine
+     * Validation du domaine.
+     * Limité cela quelques extentions pas cher : .com, .fr, .net
      */
     if (!empty($domain) || $domaine_existing) {
       $domaine = strtolower($form_state->getValue('domaine'));
+      if (!str_contains($domain, ".com") && !str_contains($domain, ".fr") && !str_contains($domain, ".net")) {
+        $form_state->setErrorByName('domaine', ' Les extentions sont limitées à .com, .fr, .net');
+      }
       $form_state->set('domaine', $domaine);
       $oldDomain = strtolower($form_state->getValue('domaine_existing'));
       $form_state->set('domaine_existing', $oldDomain);
@@ -394,25 +411,6 @@ afin que votre domain puisse pointer sur votre site web. vous devez egalment le 
       if ($oldExit) {
         if (mb_strlen($oldDomain) < 3) {
           $form_state->setErrorByName('domaine', ' Nombre de caractere inssufisant ');
-        }
-        else {
-          // Validation de domaine;
-          try {
-          /**
-           * Pour le moment on desactive cette etape, aucune consistance de la
-           * garder.
-           */
-            // $result = $this->ManageBuyDomain->searchDomain($oldDomain,
-            // $oldDomain);
-            // if (isset($result['status_domain']) && $result['status_domain'])
-            // $form_state->setErrorByName('domaine_existing', " Domaine non
-            // disponible ");
-            // else
-            // $this->ManageBuyDomain->saveDomain($oldDomain);
-          }
-          catch (\Exception $e) {
-            $form_state->setErrorByName('domaine_existing', $e->getMessage());
-          }
         }
       }
       elseif ($domaine) {
@@ -429,7 +427,10 @@ afin que votre domain puisse pointer sur votre site web. vous devez egalment le 
               $this->ManageBuyDomain->saveDomain($domaine);
           }
           catch (\Exception $e) {
-            $form_state->setErrorByName('domaine', $e->getMessage());
+            if ($e->getCode() == 440)
+              $form_state->setErrorByName('domaine', $e->getMessage());
+            else
+              $form_state->setErrorByName('domaine', " Le domaine saisie est incorrect ");
           }
         }
       }
