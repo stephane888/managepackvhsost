@@ -438,7 +438,7 @@ afin que votre domain puisse pointer sur votre site web. vous devez egalment le 
      * On verifie si le domaine est disponible.
      */
     if (isset($form['domaine_existing'])) {
-      $oldDomain = $form_state->get('domaine_existing');
+      $oldDomain = $form_state->getValue('domaine_existing');
       if (empty($oldDomain))
         $form_state->setErrorByName('domaine_existing', "Le domaine est requis");
       if (!$this->validconfigDomain($oldDomain))
