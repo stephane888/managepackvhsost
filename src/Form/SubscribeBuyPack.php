@@ -451,8 +451,8 @@ afin que votre domain puisse pointer sur votre site web. vous devez egalment le 
      */
     if (isset($form['sub_domain'])) {
       $domaineId = $form_state->getValue('sub_domain');
-      $domaine = $form_state->get('domaine');
-      $oldDomain = $form_state->get('domaine_existing');
+      $domaine = $form_state->getValue('domaine');
+      $oldDomain = $form_state->getValue('domaine_existing');
       if ($domaineId) {
         $query = \Drupal::entityTypeManager()->getStorage('domain_search')->getQuery();
         $query->accessCheck(TRUE);
