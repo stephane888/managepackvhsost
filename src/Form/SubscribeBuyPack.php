@@ -393,12 +393,11 @@ afin que votre domain puisse pointer sur votre site web. vous devez egalment le 
     //
     //
     $domain = $form_state->getValue('domaine');
-    $domaine_existing = $form_state->getValue('domaine_existing');
     /**
      * Validation du domaine.
      * Limité cela quelques extentions pas cher : .com, .fr, .net
      */
-    if (!empty($domain) || $domaine_existing) {
+    if (!empty($domain)) {
       $domaine = strtolower($form_state->getValue('domaine'));
       if (!str_contains($domain, ".com") && !str_contains($domain, ".fr") && !str_contains($domain, ".net")) {
         $form_state->setErrorByName('domaine', ' Les extentions sont limitées à .com, .fr, .net');
