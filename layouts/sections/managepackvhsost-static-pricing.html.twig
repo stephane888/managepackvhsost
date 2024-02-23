@@ -1,23 +1,23 @@
 {% if content %}
-<div class="wix-theme-price">
-	<div class="access-container space-padding-py">
-		<div class="container">
-			<div class="width-phone mx-auto font-weight-bold">
-				<div class="access-text text-center">
-					<h2 class="display-4 font-weight-bold">Nos forfaits</h2>
-					<p>Vous Souhaitez avoir un site web complet et fonctionnelle, Wb-horizon propose un trenataine de modele de site et e-commerce,un nombre
-						illimitee de pages, des articles à l'infini. Chaque modele est unique, travaillé dans les moindre details. Demarrer ou ameliorer votre presence sur le web </p>
-					<button class="btn btn-primary rounded-pill d-none">Commencer</button>
+	<div class="wix-theme-price">
+		<div class="access-container space-padding-py">
+			<div class="container">
+				<div class="width-phone mx-auto font-weight-bold">
+					<div class="access-text text-center">
+						<h2 class="display-4 font-weight-bold">Nos forfaits</h2>
+						<p>Vous souhaitez avoir un site web complet et fonctionnel ? Wb-horizon propose une trentaine de modèles de site et e-commerce, un nombre illimité de pages et des articles à l'infini. Chaque modèle est unique et travaillé dans les moindres détails. Démarrez ou améliorez votre présence sur le web avec nous.</p>
+
+						<button class="btn btn-primary rounded-pill d-none">Commencer</button>
+					</div>
 				</div>
 			</div>
 		</div>
+		{% include "@managepackvhsost/includes/tabs.html.twig" %}
+		<div class="tab-content" id="myTabContent">
+			{% include "@managepackvhsost/includes/tab1.html.twig" %}
+			{% include "@managepackvhsost/includes/tab2.html.twig" %}
+		</div>
 	</div>
-	{% include "@managepackvhsost/includes/tabs.html.twig" %}
-	<div class="tab-content" id="myTabContent">
-		{% include "@managepackvhsost/includes/tab1.html.twig" %}	
-		{% include "@managepackvhsost/includes/tab2.html.twig" %}	
-	</div>
-</div>
 
 
 {% endif %}

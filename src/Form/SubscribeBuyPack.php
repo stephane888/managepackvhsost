@@ -20,34 +20,34 @@ use Drupal\ovh_api_rest\Services\ManageDnsZone;
 class SubscribeBuyPack extends FormBase {
   use SubscribeBuyPackSteps;
   private static $max_stape = 5;
-  
+
   /**
    *
    * @var \Drupal\managepackvhsost\Services\CheckDomains
    */
   protected $CheckDomains;
-  
+
   /**
    *
    * @var \Drupal\ovh_api_rest\Services\ManageBuyDomain
    */
   protected $ManageBuyDomain;
-  
+
   /**
    *
    * @var \Drupal\stripebyhabeuk\Services\PasserelleStripe
    */
   protected $PasserelleStripe;
-  
+
   /**
    *
    * @var array
    */
   protected $type_packs = [
-    'site-pro' => 'Pack BRONZE',
-    'site-vip' => 'Pack GOLD'
+    'site-pro' => 'Forfait site vitrine',
+    'site-vip' => 'Forfait e-commerce'
   ];
-  
+
   /**
    *
    * @param CheckDomains $CheckDomains
@@ -60,7 +60,7 @@ class SubscribeBuyPack extends FormBase {
     $this->PasserelleStripe = $PasserelleStripe;
     $this->ManageDnsZone = $ManageDnsZone;
   }
-  
+
   /**
    *
    * {@inheritdoc}
@@ -68,7 +68,7 @@ class SubscribeBuyPack extends FormBase {
   public static function create(ContainerInterface $container) {
     return new static($container->get('managepackvhsost.search_domain'), $container->get('ovh_api_rest.manage_buy_domain'), $container->get('stripebyhabeuk.manage'), $container->get('ovh_api_rest.manage_dns_zone'));
   }
-  
+
   /**
    *
    * {@inheritdoc}
@@ -76,7 +76,7 @@ class SubscribeBuyPack extends FormBase {
   public function getFormId() {
     return 'managepackvhsost_subscribe_buy_pack';
   }
-  
+
   /**
    *
    * {@inheritdoc}
@@ -84,7 +84,7 @@ class SubscribeBuyPack extends FormBase {
   public function buildForm(array $form, FormStateInterface $form_state) {
     // dump(gethostbyname('tonsiteweb.fr'));
     // dump(dns_get_record('www.tonsiteweb.fr', DNS_A | DNS_AAAA));
-    
+
     //
     $form['#attributes']['id'] = $this->getFormId();
     if ((!$form_state->has('page_num') || $form_state->get('page_num') == 1) && empty($_GET['type_pack'])) {
@@ -92,8 +92,7 @@ class SubscribeBuyPack extends FormBase {
         "padding-bottom"
       ];
       $this->loadLayout($form);
-    }
-    else
+    } else
       $class = [
         "padding-bottom",
         "padding-top",
@@ -110,7 +109,7 @@ class SubscribeBuyPack extends FormBase {
     $this->actionsButtons($form, $form_state);
     return $form;
   }
-  
+
   /**
    *
    * @param array $form
@@ -138,13 +137,12 @@ class SubscribeBuyPack extends FormBase {
           $this->messenger()->addWarning('Bad stepe');
           break;
       }
-    }
-    else {
+    } else {
       $form_state->set('page_num', 1);
       $this->formSelectPack($form, $form_state);
     }
   }
-  
+
   /**
    * Selection du pack
    *
@@ -157,7 +155,7 @@ class SubscribeBuyPack extends FormBase {
       'tempValues',
       $n
     ]);
-    
+
     $form['type_pack'] = [
       '#type' => 'select',
       '#title' => $this->t('Selectionner un pack'),
@@ -174,7 +172,7 @@ class SubscribeBuyPack extends FormBase {
     ];
     $form['#attached']['library'][] = 'managepackvhsost/select_pack';
   }
-  
+
   /**
    * Permet de selectionner l'achat d'un nouveau domaine, un domaine existant
    * ...
@@ -199,7 +197,7 @@ class SubscribeBuyPack extends FormBase {
       '#default_value' => isset($tempValue['select_type_action']) ? $tempValue['select_type_action'] : 'new_domain'
     ];
   }
-  
+
   /**
    * Selection du domaine
    *
@@ -207,7 +205,7 @@ class SubscribeBuyPack extends FormBase {
    * @param FormStateInterface $form_state
    */
   protected function formGetDomainValue(array &$form, FormStateInterface $form_state) {
-    
+
     /**
      * Si l'utilisateur n'est pas connecté, on le connecté.
      * Si l'utilisateur n'a pas encore generer de site web, il ne doit pas
@@ -231,8 +229,7 @@ class SubscribeBuyPack extends FormBase {
       ];
       $form['#attached']['library'][] = 'login_rx_vuejs/login_register';
       // $form_state->set('page_num', 2);
-    }
-    else {
+    } else {
       $n = $form_state->get('page_num');
       $tempValue = $form_state->get([
         'tempValues',
@@ -319,7 +316,7 @@ afin que votre domain puisse pointer sur votre site web. vous devez egalment le 
       ];
     }
   }
-  
+
   /**
    * Selection de la periode
    *
@@ -328,12 +325,12 @@ afin que votre domain puisse pointer sur votre site web. vous devez egalment le 
    */
   protected function formCycleFacturation(array &$form, FormStateInterface $form_state) {
     $n = $form_state->get('page_num');
-    
+
     $tempValue = $form_state->get([
       'tempValues',
       $n
     ]);
-    
+
     $form['periode'] = [
       '#type' => 'radios',
       '#title' => $this->t(' Cycles de facturation '),
@@ -346,7 +343,7 @@ afin que votre domain puisse pointer sur votre site web. vous devez egalment le 
       '#default_value' => isset($tempValue['periode']) ? $tempValue['periode'] : 'p1y'
     ];
   }
-  
+
   /**
    * 1- Generer le token client pour le payment.
    * 2- Genere le formulaire permettant d'entrer les informations de la CB.
@@ -364,23 +361,23 @@ afin que votre domain puisse pointer sur votre site web. vous devez egalment le 
       throw ExceptionDebug::exception("Une erreur s'est produite");
     }
     $price = $this->getPrice($form, $form_state);
-    
+
     $titre = "Abonnement";
     $paimentIndent = $this->PasserelleStripe->paidInvoice($price, $titre);
     $domain_search->set('client_secret', $paimentIndent['client_secret']);
     //
     $tempValue = $form_state->get('tempValues');
-    
+
     foreach ($tempValue as $value) {
       if (!empty($value['type_pack'])) {
         $domain_search->set('abonnement', $value['type_pack']);
       }
     }
     $domain_search->save();
-    
+
     $this->fieldsPaiement($form, $form_state, $price, $paimentIndent);
   }
-  
+
   /**
    *
    * {@inheritdoc}
@@ -411,12 +408,10 @@ afin que votre domain puisse pointer sur votre site web. vous devez egalment le 
         if (mb_strlen($oldDomain) < 3) {
           $form_state->setErrorByName('domaine', ' Nombre de caractere inssufisant ');
         }
-      }
-      elseif ($domaine) {
+      } elseif ($domaine) {
         if (mb_strlen($domaine) < 3) {
           $form_state->setErrorByName('domaine', ' Nombre de caractere inssufisant ');
-        }
-        else {
+        } else {
           // Validation de domaine;
           try {
             $result = $this->ManageBuyDomain->searchDomain($domaine, $domaine);
@@ -424,8 +419,7 @@ afin que votre domain puisse pointer sur votre site web. vous devez egalment le 
               $form_state->setErrorByName('domaine', " Domaine non disponible, veillez nous contacter pour plus d'information ");
             else
               $this->ManageBuyDomain->saveDomain($domaine);
-          }
-          catch (\Exception $e) {
+          } catch (\Exception $e) {
             if ($e->getCode() == 440)
               $form_state->setErrorByName('domaine', $e->getMessage());
             else
@@ -467,8 +461,7 @@ afin que votre domain puisse pointer sur votre site web. vous devez egalment le 
             $form_state->setErrorByName('domaine', ' Ce domaine "' . $domaine . '" a deja été enregistré ');
           elseif ($oldDomain)
             $form_state->setErrorByName('sub_domain', ' Ce domaine "' . $oldDomain . '" a deja été enregistré ');
-        }
-        else {
+        } else {
           $domain_search = $form_state->get('domain_search');
           if (!$domain_search) {
             $uid = \Drupal::currentUser()->id();
@@ -486,8 +479,7 @@ afin que votre domain puisse pointer sur votre site web. vous devez egalment le 
               $id = reset($ids);
               $domain_search = \Drupal::entityTypeManager()->getStorage('domain_search')->load($id);
               $domain_search->set('domain_external', $domaine ? $domaine : $oldDomain);
-            }
-            else {
+            } else {
               $values = [
                 'domain_id_drupal' => $domaineId,
                 'domain_external' => $domaine ? $domaine : $oldDomain,
@@ -498,8 +490,7 @@ afin que votre domain puisse pointer sur votre site web. vous devez egalment le 
               $domain_search = \Drupal::entityTypeManager()->getStorage('domain_search')->create($values);
             }
             $form_state->set('domain_search', $domain_search);
-          }
-          else {
+          } else {
             $domain_search->set('domain_id_drupal', $domaineId);
             $domain_search->set('domain_external', $domaine ? $domaine : $oldDomain);
             $domain_search->set('name', $domaineId);
@@ -520,5 +511,4 @@ afin que votre domain puisse pointer sur votre site web. vous devez egalment le 
       }
     }
   }
-  
 }
