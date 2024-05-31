@@ -12,14 +12,14 @@ use Drupal\lesroidelareno\lesroidelareno;
  * Provides a managepackvhsost form.
  */
 trait SubscribeBuyPackSteps {
-  
+
   protected function loadLayout(&$form) {
     /**
      *
      * @var \Drupal\Core\Layout\LayoutPluginManager $layoutPluginManager
      */
     $layoutPluginManager = \Drupal::service('plugin.manager.core.layout');
-    
+
     /**
      *
      * @var \Drupal\managepackvhsost\Plugin\Layout\Sections\StaticPricing $instance
@@ -28,7 +28,7 @@ trait SubscribeBuyPackSteps {
     $regions = [];
     $form['header'] = $instance->build($regions);
   }
-  
+
   /**
    * Permet de se place directement sur l'etape du domaine.
    */
@@ -45,7 +45,7 @@ trait SubscribeBuyPackSteps {
       }
     }
   }
-  
+
   /**
    *
    * @param array $form
@@ -55,7 +55,7 @@ trait SubscribeBuyPackSteps {
   public function selectPreviewsCallback(array $form, FormStateInterface $form_state) {
     return $form;
   }
-  
+
   /**
    *
    * @param array $form
@@ -65,7 +65,7 @@ trait SubscribeBuyPackSteps {
   public function selectNextCallback(array $form, FormStateInterface $form_state) {
     return $form;
   }
-  
+
   /**
    * On incremente page_num et on doit faire une sauvegarde des données de
    * l'etape precedante.
@@ -80,7 +80,7 @@ trait SubscribeBuyPackSteps {
     else
       $form_state->set('page_num', 1)->setRebuild(TRUE);
   }
-  
+
   /**
    * --
    *
@@ -93,13 +93,13 @@ trait SubscribeBuyPackSteps {
       'tempValues',
       $n
     ], $form_state->getValues());
-    
+
     if ($n < self::$max_stape)
       $form_state->set('page_num', $n + 1)->setRebuild(TRUE);
     else
       $form_state->set('page_num', $n)->setRebuild(TRUE);
   }
-  
+
   /**
    *
    * @param array $form
@@ -110,7 +110,7 @@ trait SubscribeBuyPackSteps {
       'tempValues',
       4
     ]);
-    
+
     if (!empty($tempValue["periode"])) {
       switch ($tempValue["periode"]) {
         case "p2y":
@@ -129,7 +129,7 @@ trait SubscribeBuyPackSteps {
     // renvoyer une erreur.
     // return 8;
   }
-  
+
   /**
    *
    * {@inheritdoc}
@@ -137,7 +137,7 @@ trait SubscribeBuyPackSteps {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $this->messenger()->addStatus($this->t('The message has been sent.'));
   }
-  
+
   /**
    *
    * @param array $form
@@ -156,7 +156,7 @@ trait SubscribeBuyPackSteps {
           'flex-column align-items-center'
         ]
       ],
-      
+
       [
         '#type' => 'html_tag',
         '#tag' => 'h2',
@@ -187,7 +187,7 @@ trait SubscribeBuyPackSteps {
         '#type' => 'html_tag',
         '#tag' => 'img',
         '#attributes' => [
-          'src' => '/' . drupal_get_path('module', 'managepackvhsost') . '/img/us-available-brands.e0ae81a0.svg',
+          'src' => '/' . \Drupal::service("extension.path.resolver")->getPath('module', 'managepackvhsost') . '/img/us-available-brands.e0ae81a0.svg',
           'class' => [
             'img-fluid',
             'mb-4',
@@ -246,7 +246,7 @@ trait SubscribeBuyPackSteps {
       'return_url' => $request->getScheme() . '://' . $request->getHttpHost() . '/managepackvhsost/afterpay'
     ];
   }
-  
+
   /**
    *
    * @param array $form
@@ -292,7 +292,7 @@ trait SubscribeBuyPackSteps {
           ]
         ]
       ];
-    
+
     if ($form_state->get('page_num') < self::$max_stape) {
       $text = 'Suivant';
       if ($form_state->get('page_num') == 1)
@@ -325,7 +325,7 @@ trait SubscribeBuyPackSteps {
         ]
       ];
     }
-    
+
     if ($form_state->get('page_num') == self::$max_stape) {
       $form['container_buttons']['actions'] = [
         '#type' => 'actions'
@@ -342,7 +342,7 @@ trait SubscribeBuyPackSteps {
       ];
     }
   }
-  
+
   /**
    * Permet de valider la configuration du domaine.
    *
@@ -375,7 +375,7 @@ trait SubscribeBuyPackSteps {
       }
     return $status;
   }
-  
+
   private function excuteCmd($cmd) {
     ob_start();
     $return_var = '';
@@ -391,5 +391,4 @@ trait SubscribeBuyPackSteps {
     ];
     return $debug;
   }
-  
 }

@@ -4,23 +4,22 @@ namespace Drupal\managepackvhsost\EventSubscriber;
 
 use Drupal\Core\Messenger\MessengerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\HttpKernel\Event\FilterResponseEvent;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
-use Symfony\Component\HttpKernel\Event\GetResponseEvent;
+use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
  * managepackvhsost event subscriber.
  */
 class ManagepackvhsostSubscriber implements EventSubscriberInterface {
-  
+
   /**
    * The messenger.
    *
    * @var \Drupal\Core\Messenger\MessengerInterface
    */
   protected $messenger;
-  
+
   /**
    * Constructs event subscriber.
    *
@@ -30,27 +29,27 @@ class ManagepackvhsostSubscriber implements EventSubscriberInterface {
   public function __construct(MessengerInterface $messenger) {
     $this->messenger = $messenger;
   }
-  
+
   /**
    * Kernel request event handler.
    *
-   * @param \Symfony\Component\HttpKernel\Event\GetResponseEvent $event
+   * @param \Symfony\Component\HttpKernel\Event\RequestEvent $event
    *        Response event.
    */
-  public function onKernelRequest(GetResponseEvent $event) {
+  public function onKernelRequest(RequestEvent $event) {
     // $this->messenger->addStatus(__FUNCTION__);
   }
-  
+
   /**
    * Kernel response event handler.
    *
-   * @param \Symfony\Component\HttpKernel\Event\FilterResponseEvent $event
+   * @param \Symfony\Component\HttpKernel\Event\ResponseEvent $event
    *        Response event.
    */
-  public function onKernelResponse(FilterResponseEvent $event) {
+  public function onKernelResponse(ResponseEvent $event) {
     // $this->messenger->addStatus(__FUNCTION__);
   }
-  
+
   /**
    *
    * {@inheritdoc}
@@ -71,10 +70,9 @@ class ManagepackvhsostSubscriber implements EventSubscriberInterface {
     ];
     return $events;
   }
-  
+
   public function RemoveXFrameOptions(ResponseEvent $event) {
     $response = $event->getResponse();
     $response->headers->remove('X-Frame-Options');
   }
-  
 }
