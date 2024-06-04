@@ -8,38 +8,38 @@ use Drupal\Core\Database\Connection;
 use Drupal\domain\Entity\Domain;
 
 class BlocksDomains {
-  
+
   /**
    * The entity type manager.
    *
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected $entityTypeManager;
-  
+
   /**
    *
    * @var \Drupal\Core\Session\AccountProxy
    */
   protected $user;
-  
+
   /**
    *
    * @var \Drupal\Core\Database\Connection
    */
   protected $connection;
-  
+
   /**
    *
    * @var [EntityTypeManagerInterface]
    */
   protected $blocks = [];
-  
+
   function __construct(EntityTypeManagerInterface $entity_type_manager, AccountProxy $user, Connection $Connection) {
     $this->entityTypeManager = $entity_type_manager;
     $this->user = $user;
     $this->connection = $Connection;
   }
-  
+
   /**
    * -
    */
@@ -56,7 +56,7 @@ class BlocksDomains {
         ]
       ]
     ];
-    
+
     foreach ($this->blocks as $block) {
       // dump($block);
       $domaines['romx'][] = [
@@ -71,7 +71,7 @@ class BlocksDomains {
         $block
       ];
     }
-    
+
     //
     return [
       '#type' => 'html_tag',
@@ -83,7 +83,7 @@ class BlocksDomains {
       ]
     ];
   }
-  
+
   /**
    * --
    *
@@ -94,9 +94,10 @@ class BlocksDomains {
     $query = $this->entityTypeManager->getStorage('domain_ovh_entity')->getQuery();
     $query->condition('user_id', $user_id);
     $query->sort('created', 'DESC');
+    $query->accessCheck(FALSE);
     return $query->count()->execute();
   }
-  
+
   /**
    *
    * @return [EntityTypeManagerInterface]
@@ -107,8 +108,9 @@ class BlocksDomains {
     $query->condition('user_id', $user_id);
     $query->pager(6);
     $query->sort('created', 'DESC');
+    $query->accessCheck(FALSE);
     $ids = $query->execute();
-    
+
     if (!empty($ids)) {
       $entities = $this->entityTypeManager->getStorage('domain_ovh_entity')->loadMultiple($ids);
       foreach ($entities as $value) {
@@ -122,7 +124,7 @@ class BlocksDomains {
           $donnee_internet_entity = reset($donnee_internet_entity);
           // dump('test : ', $donnee_internet_entity->id());
         }
-        
+
         // dump($value->id());
         // Load entity : domain
         $domain = $this->entityTypeManager->getStorage('domain')->loadByProperties([
@@ -182,7 +184,7 @@ class BlocksDomains {
     }
     return $this->blocks;
   }
-  
+
   protected function getSouscription($domain) {
     return [
       [
@@ -200,7 +202,7 @@ class BlocksDomains {
       ]
     ];
   }
-  
+
   protected function getDomaines(Domain $domain, array &$reult) {
     if (!empty($domain))
       $reult[] = [
@@ -220,5 +222,4 @@ class BlocksDomains {
         ]
       ];
   }
-  
 }
