@@ -319,7 +319,11 @@ trait SubscribeBuyPackSteps {
             'w-auto',
             'h-auto',
             'btn-primary',
-            'btn rounded-pill'
+            'btn rounded-pill',
+            "btn-primary",
+            "text-white",
+            "border-radius-20",
+            "border-0"
           ],
           'data-trigger' => 'run'
         ]
