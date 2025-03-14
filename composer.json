@@ -8,8 +8,5 @@
       "email": "kksasteph888@gmail.com"
     }
   ],
-  "minimum-stability": "dev",
-  "require": {
-    "drupal/domain": "^2.0.x-dev"
-  }
+  "minimum-stability": "dev"
 }
